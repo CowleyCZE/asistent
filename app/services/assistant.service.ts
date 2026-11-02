@@ -1,4 +1,4 @@
-import { SettingsService, Action } from './settings.service';
+import { SettingsService, Action, WebhookAuth } from './settings.service';
 import { TaskerService } from './tasker.service';
 import { HistoryService, CommandStatus } from './history.service';
 import { TextToSpeechService } from './text-to-speech.service';
@@ -138,6 +138,9 @@ export class AssistantService {
     private async executeWebhook(action: Action): Promise<boolean> {
         console.log(`Příkaz nalezen: "${action.name}". Volám webhook: ${action.url}`);
         
+        // Get webhook auth settings
+        const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
+        
         // Check cache first
         const cacheKey = `webhook_${action.url}`;
         const cachedResponse = this.cacheService.getWebhookCache(action.url);
@@ -154,9 +157,35 @@ export class AssistantService {
         }
         
         try {
-            const response = await fetch(action.url, {
-                method: 'POST'
-            });
+            // Build fetch options with authentication
+            const fetchOptions: RequestInit = {
+                method: 'POST',
+                headers: {}
+            };
+            
+            // Add API key authentication if configured
+            if (webhookAuth.apiKey) {
+                fetchOptions.headers = {
+                    ...fetchOptions.headers,
+                    'X-API-Key': webhookAuth.apiKey
+                };
+                console.log(`Přidán API klíč pro webhook: ${action.name}`);
+            }
+            
+            // Add HMAC signature if enabled
+            if (webhookAuth.useHmac && webhookAuth.hmacSecret) {
+                const timestamp = Date.now().toString();
+                const message = `${action.url}:${timestamp}`;
+                const signature = this.generateHmacSignature(message, webhookAuth.hmacSecret);
+                fetchOptions.headers = {
+                    ...fetchOptions.headers,
+                    'X-HMAC-Signature': signature,
+                    'X-HMAC-Timestamp': timestamp
+                };
+                console.log(`Přidán HMAC podpis pro webhook: ${action.name}`);
+            }
+            
+            const response = await fetch(action.url, fetchOptions);
 
             if (response.ok) {
                 console.log(`Webhook ${action.name} úspěšně zavolán.`);
@@ -226,10 +255,37 @@ export class AssistantService {
 
     public async processOfflineQueue(): Promise<{ processed: number; failed: number }> {
         if (this.isOnline()) {
+            const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
             return this.offlineService.processAllCommands(
                 async (url: string) => {
                     try {
-                        const response = await fetch(url, { method: 'POST' });
+                        // Build fetch options with authentication
+                        const fetchOptions: RequestInit = {
+                            method: 'POST',
+                            headers: {}
+                        };
+                        
+                        // Add API key authentication if configured
+                        if (webhookAuth.apiKey) {
+                            fetchOptions.headers = {
+                                ...fetchOptions.headers,
+                                'X-API-Key': webhookAuth.apiKey
+                            };
+                        }
+                        
+                        // Add HMAC signature if enabled
+                        if (webhookAuth.useHmac && webhookAuth.hmacSecret) {
+                            const timestamp = Date.now().toString();
+                            const message = `${url}:${timestamp}`;
+                            const signature = this.generateHmacSignature(message, webhookAuth.hmacSecret);
+                            fetchOptions.headers = {
+                                ...fetchOptions.headers,
+                                'X-HMAC-Signature': signature,
+                                'X-HMAC-Timestamp': timestamp
+                            };
+                        }
+                        
+                        const response = await fetch(url, fetchOptions);
                         return response.ok;
                     } catch {
                         return false;
@@ -247,7 +303,17 @@ export class AssistantService {
 
     public isOfflineModeActive(): boolean {
         return this.offlineService.isOfflineModeActive();
-    }
+
+
+    private generateHmacSignature(message: string, secret: string): string {
+        // Simple HMAC simulation using SHA-256
+        // In a real implementation, use crypto.createHmac
+        // For NativeScript, we'll use a simple hash approach
+        const crypto = require('crypto');
+        const hmac = crypto.createHmac('sha256', secret);
+        hmac.update(message);
+        return hmac.digest('hex');
+    }    }
 
     private logToFile(message: string) {
         const documents = knownFolders.documents();

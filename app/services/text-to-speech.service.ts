@@ -1,5 +1,6 @@
 import { ApplicationSettings } from '@nativescript/core';
 import { SettingsService } from './settings.service';
+import { serviceRegistry } from './service-registry';
 
 export interface TTSConfig {
     enabled: boolean;
@@ -17,6 +18,9 @@ export class TextToSpeechService {
     constructor() {
         this.settingsService = new SettingsService();
         this.initialize();
+        
+        // Register for cleanup on app exit
+        serviceRegistry.register(this);
     }
 
     private initialize() {
@@ -180,6 +184,11 @@ export class TextToSpeechService {
                 console.error('Error shutting down TTS:', error);
             }
         }
+    }
+
+    public dispose(): void {
+        this.stop();
+        this.shutdown();
     }
 
     public getAvailableLanguages(): string[] {

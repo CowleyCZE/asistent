@@ -1,5 +1,4 @@
-import { ApplicationSettings } from '@nativescript/core';
-import { knownFolders } from '@nativescript/core';
+import { ApplicationSettings, knownFolders } from '@nativescript/core';
 
 export interface OfflineCommand {
     id: string;

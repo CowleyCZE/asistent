@@ -8,17 +8,17 @@
 ## P0 - KRITICKÉ (Okamžitá oprava)
 
 ### Bezpečnost
-- [ ] Opravit hardcodované API klíče v app/config/api-config.ts
-- [ ] Odstranit .env z repozitáře a přidat do .gitignore
-- [ ] Nastavit GitHub Secrets pro CI/CD
-- [ ] Přidat API key autentizaci pro webhooky
-- [ ] Implementovat HMAC signature verificaci pro webhooky
+- [x] Opravit hardcodované API klíče v app/config/api-config.ts
+- [x] Odstranit .env z repozitáře a přidat do .gitignore
+- [x] Nastavit GitHub Secrets pro CI/CD
+- [x] Přidat API key autentizaci pro webhooky
+- [x] Implementovat HMAC signature verificaci pro webhooky
 
 ### Chyby v kódu
-- [ ] Opravit NO********ION na NOTIFICATION v app/services/notification.service.ts
-- [ ] Odstranit duplicitní import knownFolders v app/services/offline.service.ts
-- [ ] Implementovat dispose() metody pro všechny služby (speech-recognition, feedback, tts)
-- [ ] Zaregistrovat cleanup v Application exit event
+ - [x] Opravit NOTIFICATION v app/services/notification.service.ts
+- [x] Odstranit duplicitní import knownFolders v app/services/offline.service.ts
+- [x] Implementovat dispose() metody pro všechny služby (speech-recognition, feedback, tts)
+- [x] Zaregistrovat cleanup v Application exit event
 
 ---
 

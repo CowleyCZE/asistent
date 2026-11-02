@@ -10,6 +10,12 @@ export interface Action {
     taskName?: string; // Pro Tasker
 }
 
+export interface WebhookAuth {
+    apiKey?: string;
+    hmacSecret?: string;
+    useHmac?: boolean;
+}
+
 export interface AppSettings {
     wakePhrases: string[];
     feedbackEnabled: boolean;
@@ -19,6 +25,7 @@ export interface AppSettings {
     ttsLanguage: string;
     ttsPitch: number;
     ttsRate: number;
+    webhookAuth?: WebhookAuth;
 }
 
 export class SettingsService {
@@ -35,7 +42,12 @@ export class SettingsService {
         ttsEnabled: true,
         ttsLanguage: 'cs-CZ',
         ttsPitch: 1.0,
-        ttsRate: 1.0
+        ttsRate: 1.0,
+        webhookAuth: {
+            apiKey: '',
+            hmacSecret: '',
+            useHmac: false
+        }
     };
 
     constructor() {
@@ -156,5 +168,35 @@ export class SettingsService {
             pitch: settings.ttsPitch,
             rate: settings.ttsRate
         };
+    }
+
+    // Webhook Auth Settings
+    public getWebhookAuth(): WebhookAuth {
+        const settings = this.getSettings();
+        return settings.webhookAuth || { apiKey: '', hmacSecret: '', useHmac: false };
+    }
+
+    public updateWebhookAuth(auth: WebhookAuth) {
+        const settings = this.getSettings();
+        settings.webhookAuth = auth;
+        this.saveSettings(settings);
+    }
+
+    public updateWebhookApiKey(apiKey: string) {
+        const auth = this.getWebhookAuth();
+        auth.apiKey = apiKey;
+        this.updateWebhookAuth(auth);
+    }
+
+    public updateWebhookHmacSecret(secret: string) {
+        const auth = this.getWebhookAuth();
+        auth.hmacSecret = secret;
+        this.updateWebhookAuth(auth);
+    }
+
+    public updateWebhookUseHmac(useHmac: boolean) {
+        const auth = this.getWebhookAuth();
+        auth.useHmac = useHmac;
+        this.updateWebhookAuth(auth);
     }
 }

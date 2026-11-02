@@ -3,6 +3,7 @@ import { Observable } from '@nativescript/core';
 declare var android: any;
 declare var java: any;
 import { SettingsService } from './settings.service';
+import { serviceRegistry } from './service-registry';
 
 export class SpeechRecognitionService extends Observable {
     private speechRecognizer: any;
@@ -15,6 +16,9 @@ export class SpeechRecognitionService extends Observable {
         this.settingsService = new SettingsService();
         this.initializeSpeechRecognizer();
         this.startWakeWordDetection();
+        
+        // Register for cleanup on app exit
+        serviceRegistry.register(this);
     }
 
     private initializeSpeechRecognizer() {
@@ -126,5 +130,10 @@ export class SpeechRecognitionService extends Observable {
         if (this.speechRecognizer) {
             this.speechRecognizer.destroy();
         }
+    }
+
+    public dispose(): void {
+        this.stopListening();
+        this.destroy();
     }
 }

@@ -2,6 +2,7 @@ import { knownFolders, path, File } from '@nativescript/core';
 
 declare var android: any;
 declare var java: any;
+import { serviceRegistry } from './service-registry';
 
 export class FeedbackService {
     private player: any;
@@ -10,6 +11,9 @@ export class FeedbackService {
     constructor() {
         this.player = new android.media.MediaPlayer();
         this.soundsPath = path.join(knownFolders.currentApp().path, 'assets', 'sounds');
+        
+        // Register for cleanup on app exit
+        serviceRegistry.register(this);
     }
 
     public async playStartSound() {

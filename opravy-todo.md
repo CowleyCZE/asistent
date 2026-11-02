@@ -1,0 +1,185 @@
+# CZE-asistent - TODO List
+
+**Poslední aktualizace:** 2. listopadu 2024
+**Celkový počet úkolů:** 109
+
+---
+
+## P0 - KRITICKÉ (Okamžitá oprava)
+
+### Bezpečnost
+- [ ] Opravit hardcodované API klíče v app/config/api-config.ts
+- [ ] Odstranit .env z repozitáře a přidat do .gitignore
+- [ ] Nastavit GitHub Secrets pro CI/CD
+- [ ] Přidat API key autentizaci pro webhooky
+- [ ] Implementovat HMAC signature verificaci pro webhooky
+
+### Chyby v kódu
+- [ ] Opravit NO********ION na NOTIFICATION v app/services/notification.service.ts
+- [ ] Odstranit duplicitní import knownFolders v app/services/offline.service.ts
+- [ ] Implementovat dispose() metody pro všechny služby (speech-recognition, feedback, tts)
+- [ ] Zaregistrovat cleanup v Application exit event
+
+---
+
+## P1 - DŮLEŽITÉ (Vysoká priorita)
+
+### Architektonické problémy
+- [ ] Implementovat Dependency Injection container
+- [ ] Vytvořit ServiceLocator
+- [ ] Používat interface místo konkrétních tříd
+- [ ] Rozdělit AssistantService na menší třídy (CommandProcessor, LoggerService)
+- [ ] Extrahovat společný kód do utility tříd (IdGenerator, Logger, ErrorHandler)
+
+### Validace
+- [ ] Přidat URL validaci (regex) pro webhooky
+- [ ] Validovat délku a formát textových polí
+- [ ] Implementovat sanitizaci vstupů
+- [ ] Přidat null checks pro všechny externí volání
+- [ ] Používat optional chaining a nullish coalescing
+
+### Error Handling
+- [ ] Přidat try-catch pro všechny async operace
+- [ ] Implementovat centralizovaný error handler
+- [ ] Implementovat retry mechanismus s exponential backoff
+- [ ] Přidat timeout pro síťové požadavky
+
+---
+
+## P2 - STŘEDNÍ PRIORITA
+
+### Testování
+- [ ] Vytvořit unit testy pro speech-recognition.service.ts
+- [ ] Vytvořit unit testy pro theme.service.ts
+- [ ] Vytvořit unit testy pro feedback.service.ts
+- [ ] Vytvořit unit testy pro cache.service.ts
+- [ ] Vytvořit unit testy pro offline.service.ts
+- [ ] Vytvořit unit testy pro notification.service.ts
+- [ ] Vytvořit unit testy pro translator.service.ts
+- [ ] Vytvořit unit testy pro tasker.service.ts
+- [ ] Vytvořit unit testy pro text-to-speech.service.ts
+- [ ] Vytvořit unit testy pro history.service.ts
+- [ ] Vytvořit unit testy pro statistics.service.ts
+- [ ] Nastavit Jest coverage reporting (cíl: 80%+)
+- [ ] Přidat CI check pro minimální coverage
+- [ ] Nastavit Appium pro E2E testy
+
+### Výkon
+- [ ] Optimalizovat MP3 soubory v app/assets/sounds/ (nižší bitrate)
+- [ ] Zvažit použití OGG formátu pro zvuky
+- [ ] Implementovat TTL-based cache cleanup
+- [ ] Přidat size-based cache eviction
+- [ ] Implementovat lazy loading pro stránky
+
+### Kódová kvalita
+- [ ] Zapnout strict: true v tsconfig.json
+- [ ] Zapnout noImplicitAny: true
+- [ ] Zapnout strictNullChecks: true
+- [ ] Opravit všechny typové chyby
+- [ ] Přidat JSDoc pro všechny veřejné metody
+- [ ] Vytvořit constants soubor pro magic strings
+- [ ] Standardizovat naming konvence
+
+---
+
+## P3 - NÍZKÁ PRIORITA
+
+### UX/UI Vylepšení
+- [ ] Přidat responsive layouty
+- [ ] Testovat na různých zařízeních
+- [ ] Přidat animace pro všechny interakce
+- [ ] Vytvořit animace utility třídu
+- [ ] Přidat accessibility labels
+- [ ] Implementovat keyboard navigation
+- [ ] Přidat high contrast mode
+
+### Funkční vylepšení
+- [ ] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition
+- [ ] Implementovat continuous listening
+- [ ] Vylepšit wake word detection
+- [ ] Přidat automatické zpracování offline queue při obnově připojení
+- [ ] Implementovat priority queue pro offline příkazy
+- [ ] Přidat push notifikace (Firebase)
+- [ ] Implementovat notifikační kanály
+
+### Design
+- [ ] Přidat moderní UI komponenty
+- [ ] Vylepšit barevné schéma
+- [ ] Přidat ikony pro akce
+- [ ] Implementovat Material Design
+- [ ] Přidat světlé/tmavé téma varianty
+- [ ] Implementovat custom téma
+
+### Dokumentace
+- [ ] Přidat installation guide do README
+- [ ] Přidat usage examples do README
+- [ ] Přidat troubleshooting sekci do README
+- [ ] Přidat FAQ do README
+- [ ] Přidat screenshots do README
+- [ ] Generovat API docs z JSDoc
+- [ ] Přidat příklady použití do dokumentace
+- [ ] Přidat architecture overview
+- [ ] Dokumentovat design patterns
+- [ ] Přidat coding guidelines
+- [ ] Dokumentovat build proces
+
+---
+
+## P4 - DLOUHODOBÉ
+
+### Nové integrace
+- [ ] Home Assistant integrace
+- [ ] IFTTT integrace
+- [ ] Google Assistant integrace
+- [ ] Alexa integrace
+- [ ] IoT platform integrace
+
+### AI/ML
+- [ ] Přidat intent recognition
+- [ ] Implementovat NLP
+- [ ] Přidat context understanding
+- [ ] Umožnit custom commands
+
+### Cloud a synchronizace
+- [ ] Synchronizovat nastavení přes cloud
+- [ ] Synchronizovat historii přes cloud
+- [ ] Umožnit backup/restore
+- [ ] Synchronizace mezi zařízeními
+- [ ] Shared commands
+- [ ] Cross-device communication
+
+### iOS Podpora
+- [ ] Nastavit iOS build pipeline
+- [ ] Implementovat iOS specific služby
+- [ ] Testovat na iOS zařízeních
+- [ ] Přidat iOS permissions handling
+
+### Voice commands builder
+- [ ] Vizuální builder pro příkazy
+- [ ] Drag & drop interface
+- [ ] Testovací mód
+
+---
+
+## STATISTIKA
+
+- P0 (Kritické): 9 úkolů
+- P1 (Důležité): 25 úkolů
+- P2 (Střední): 35 úkolů
+- P3 (Nízká): 30 úkolů
+- P4 (Dlouhodobé): 10 úkolů
+- **Celkem: 109 úkolů**
+
+---
+
+## POKYNY PRO AI
+
+1. **Hledání:** Použijte Ctrl+F / Cmd+F pro vyhledávání klíčových slov
+2. **Odškrtávání:** Změňte `- [ ]` na `- [x]` pro hotové úkoly
+3. **Přidávání:** Nové úkoly přidejte na konec příslušné sekce
+4. **Priorita:** P0 > P1 > P2 > P3 > P4
+5. **Formát:** Udržujte stejný formát pro konzistenci
+
+---
+
+**Soubor vytvořen:** 2. listopadu 2024

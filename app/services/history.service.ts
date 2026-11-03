@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { StorageKeys } from '../utils/constants';
 import { IdGenerator } from '../utils/id-generator';
 
 export type CommandStatus = 'success' | 'error' | 'network_error';
@@ -23,7 +24,7 @@ export interface HistoryFilter {
 }
 
 export class HistoryService {
-    private readonly HISTORY_KEY = 'command_history_v1';
+    private readonly HISTORY_KEY = StorageKeys.CommandHistory;
     private readonly MAX_HISTORY_ITEMS = 100;
 
     public addCommand(

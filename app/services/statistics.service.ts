@@ -1,4 +1,5 @@
 import { HistoryService, CommandHistory, CommandStatus, ActionType } from './history.service';
+import { Colors } from '../utils/constants';
 import { SettingsService, Action } from './settings.service';
 
 export interface CommandStats {
@@ -175,11 +176,11 @@ export class StatisticsService {
     }
 
     public getSuccessRateColor(rate: number): string {
-        if (rate >= 90) return 'bg-green-500';
-        if (rate >= 70) return 'bg-green-400';
-        if (rate >= 50) return 'bg-yellow-500';
-        if (rate >= 30) return 'bg-orange-500';
-        return 'bg-red-500';
+        if (rate >= 90) return Colors.Success;
+        if (rate >= 70) return Colors.SuccessHigh;
+        if (rate >= 50) return Colors.SuccessMedium;
+        if (rate >= 30) return Colors.Warning;
+        return Colors.Error;
     }
 
     public getTrend(previous: number, current: number): 'up' | 'down' | 'same' {

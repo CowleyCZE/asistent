@@ -1,4 +1,5 @@
 import { ApplicationSettings, knownFolders } from '@nativescript/core';
+import { StorageKeys } from '../utils/constants';
 import { IdGenerator } from '../utils/id-generator';
 
 export interface OfflineCommand {
@@ -20,8 +21,8 @@ export interface OfflineStats {
 }
 
 export class OfflineService {
-    private readonly OFFLINE_QUEUE_KEY = 'offline_queue_v1';
-    private readonly OFFLINE_STATS_KEY = 'offline_stats_v1';
+    private readonly OFFLINE_QUEUE_KEY = StorageKeys.OfflineQueue;
+    private readonly OFFLINE_STATS_KEY = StorageKeys.OfflineStats;
     private readonly MAX_QUEUE_SIZE = 100;
     private readonly MAX_ATTEMPTS = 3;
 

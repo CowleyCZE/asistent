@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { StorageKeys } from '../utils/constants';
 
 export interface CacheEntry<T> {
     data: T;
@@ -14,7 +15,7 @@ export interface WebhookCache {
 }
 
 export class CacheService {
-    private readonly CACHE_PREFIX = 'cache_';
+    private readonly CACHE_PREFIX = StorageKeys.CachePrefix;
     private readonly DEFAULT_TTL = 300000; // 5 minutes in milliseconds
     private readonly MAX_CACHE_SIZE = 50;
 

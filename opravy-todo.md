@@ -78,7 +78,7 @@
 - [ ] Zapnout strictNullChecks: true
 - [ ] Opravit všechny typové chyby
 - [ ] Přidat JSDoc pro všechny veřejné metody
-- [ ] Vytvořit constants soubor pro magic strings
+- [x] Vytvořit constants soubor pro magic strings
 - [ ] Standardizovat naming konvence
 
 ---

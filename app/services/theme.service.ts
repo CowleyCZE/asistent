@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { StorageKeys } from '../utils/constants';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -10,7 +11,7 @@ export interface ThemeSettings {
 }
 
 export class ThemeService {
-    private readonly THEME_KEY = 'theme_settings_v1';
+    private readonly THEME_KEY = StorageKeys.ThemeSettings;
     
     private readonly DEFAULT_SETTINGS: ThemeSettings = {
         mode: 'system',

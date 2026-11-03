@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { StorageKeys } from '../utils/constants';
 import { Validators, ValidationResult } from '../utils/validation';
 
 export type ActionType = 'webhook' | 'tasker';
@@ -30,7 +31,7 @@ export interface AppSettings {
 }
 
 export class SettingsService {
-    private readonly SETTINGS_KEY = 'voice_assistant_settings_v2'; // Změna klíče pro migraci
+    private readonly SETTINGS_KEY = StorageKeys.Settings; // Změna klíče pro migraci
     private readonly DEFAULT_SETTINGS: AppSettings = {
         wakePhrases: ['Hey asistente', 'Pomoc'],
         feedbackEnabled: true,
@@ -56,7 +57,7 @@ export class SettingsService {
     }
 
     private migrateOldSettings() {
-        const oldSettingsKey = 'voice_assistant_settings';
+        const oldSettingsKey = StorageKeys.LegacySettings;
         const oldSettings = ApplicationSettings.getString(oldSettingsKey);
         if (oldSettings) {
             let parsedOld: any;

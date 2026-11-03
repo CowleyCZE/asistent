@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { StorageKeys, Colors } from '../utils/constants';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -25,8 +26,8 @@ export interface NotificationSettings {
 }
 
 export class NotificationService {
-    private readonly NOTIFICATIONS_KEY = 'notifications_v1';
-    private readonly NOTIFICATION_SETTINGS_KEY = 'notification_settings_v1';
+    private readonly NOTIFICATIONS_KEY = StorageKeys.Notifications;
+    private readonly NOTIFICATION_SETTINGS_KEY = StorageKeys.NotificationSettings;
     private readonly DEFAULT_DURATION = 5000; // 5 seconds
     private readonly MAX_NOTIFICATIONS = 10;
 
@@ -332,11 +333,11 @@ export class NotificationService {
     public getNotificationColor(type: NotificationType): string {
         switch (type) {
             case 'success':
-                return 'bg-green-500';
+                return Colors.Success;
             case 'error':
-                return 'bg-red-500';
+                return Colors.Error;
             case 'warning':
-                return 'bg-orange-500';
+                return Colors.Warning;
             default:
                 return 'bg-blue-500';
         }

@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { Validators, ValidationResult } from '../utils/validation';
 
 export type ActionType = 'webhook' | 'tasker';
 
@@ -58,7 +59,14 @@ export class SettingsService {
         const oldSettingsKey = 'voice_assistant_settings';
         const oldSettings = ApplicationSettings.getString(oldSettingsKey);
         if (oldSettings) {
-            const parsedOld = JSON.parse(oldSettings);
+            let parsedOld: any;
+            try {
+                parsedOld = JSON.parse(oldSettings);
+            } catch (e) {
+                console.error('Chyba při migraci starých nastavení:', e);
+                ApplicationSettings.remove(oldSettingsKey);
+                return;
+            }
             if (parsedOld.webhooks) {
                 const newActions: Action[] = parsedOld.webhooks.map(wh => ({
                     ...wh,
@@ -78,11 +86,24 @@ export class SettingsService {
     public getSettings(): AppSettings {
         const settings = ApplicationSettings.getString(this.SETTINGS_KEY);
         if (settings) {
-            const parsed = JSON.parse(settings);
-            if (!parsed.actions) {
-                parsed.actions = this.DEFAULT_SETTINGS.actions;
+            try {
+                const parsed = JSON.parse(settings);
+                // Null-safety: doplnění chybějících polí výchozími hodnotami
+                parsed.actions = Array.isArray(parsed.actions)
+                    ? parsed.actions
+                    : this.DEFAULT_SETTINGS.actions;
+                parsed.wakePhrases = parsed.wakePhrases ?? this.DEFAULT_SETTINGS.wakePhrases;
+                parsed.ttsEnabled = parsed.ttsEnabled ?? this.DEFAULT_SETTINGS.ttsEnabled;
+                parsed.ttsLanguage = parsed.ttsLanguage ?? this.DEFAULT_SETTINGS.ttsLanguage;
+                parsed.ttsPitch = parsed.ttsPitch ?? this.DEFAULT_SETTINGS.ttsPitch;
+                parsed.ttsRate = parsed.ttsRate ?? this.DEFAULT_SETTINGS.ttsRate;
+                parsed.feedbackEnabled = parsed.feedbackEnabled ?? this.DEFAULT_SETTINGS.feedbackEnabled;
+                parsed.sensitivity = typeof parsed.sensitivity === 'number' ? parsed.sensitivity : this.DEFAULT_SETTINGS.sensitivity;
+                return parsed;
+            } catch (e) {
+                console.error('Chyba při parsování nastavení, vracím výchozí:', e);
+                return this.DEFAULT_SETTINGS;
             }
-            return parsed;
         }
         return this.DEFAULT_SETTINGS;
     }
@@ -93,7 +114,9 @@ export class SettingsService {
 
     public updateWakePhrases(phrases: string[]) {
         const settings = this.getSettings();
-        settings.wakePhrases = phrases;
+        settings.wakePhrases = (phrases ?? [])
+            .map(p => Validators.sanitizeText(p, 100))
+            .filter(p => p.length > 0);
         this.saveSettings(settings);
     }
 
@@ -110,21 +133,41 @@ export class SettingsService {
     }
 
     public getActions(): Action[] {
-        return this.getSettings().actions;
+        return this.getSettings()?.actions ?? [];
     }
 
-    public addAction(action: Action) {
+    /**
+     * Přidá akci po validaci a sanitizaci vstupů.
+     * @returns Výsledek validace (valid=false = akce nebyla uložena).
+     */
+    public addAction(action: Action): ValidationResult {
+        const { action: sanitized, result } = Validators.validateAction(action);
+        if (!result.valid) {
+            result.errors.forEach(e => console.error('Validace akce:', e));
+            return result;
+        }
         const settings = this.getSettings();
-        settings.actions.push(action);
+        settings.actions.push(sanitized as Action);
         this.saveSettings(settings);
+        return result;
     }
 
-    public updateAction(index: number, action: Action) {
+    /**
+     * Aktualizuje akci po validaci a sanitizaci vstupů.
+     * @returns Výsledek validace (valid=false = akce nebyla uložena).
+     */
+    public updateAction(index: number, action: Action): ValidationResult {
+        const { action: sanitized, result } = Validators.validateAction(action);
+        if (!result.valid) {
+            result.errors.forEach(e => console.error('Validace akce:', e));
+            return result;
+        }
         const settings = this.getSettings();
         if (index >= 0 && index < settings.actions.length) {
-            settings.actions[index] = action;
+            settings.actions[index] = sanitized as Action;
             this.saveSettings(settings);
         }
+        return result;
     }
 
     public deleteAction(index: number) {
@@ -173,7 +216,7 @@ export class SettingsService {
     // Webhook Auth Settings
     public getWebhookAuth(): WebhookAuth {
         const settings = this.getSettings();
-        return settings.webhookAuth || { apiKey: '', hmacSecret: '', useHmac: false };
+        return settings?.webhookAuth ?? { apiKey: '', hmacSecret: '', useHmac: false };
     }
 
     public updateWebhookAuth(auth: WebhookAuth) {
@@ -184,13 +227,13 @@ export class SettingsService {
 
     public updateWebhookApiKey(apiKey: string) {
         const auth = this.getWebhookAuth();
-        auth.apiKey = apiKey;
+        auth.apiKey = Validators.sanitizeText(apiKey, 256);
         this.updateWebhookAuth(auth);
     }
 
     public updateWebhookHmacSecret(secret: string) {
         const auth = this.getWebhookAuth();
-        auth.hmacSecret = secret;
+        auth.hmacSecret = Validators.sanitizeText(secret, 256);
         this.updateWebhookAuth(auth);
     }
 

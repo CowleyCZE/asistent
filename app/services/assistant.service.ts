@@ -7,6 +7,8 @@ import { OfflineService } from './offline.service';
 import { NotificationService } from './notification.service';
 import { CommandProcessor } from './command-processor';
 import { LoggerService } from '../utils/logger';
+import { ErrorHandler } from '../utils/error-handler';
+import { Validators, Limits } from '../utils/validation';
 import {
     ISettingsService,
     ITaskerService,
@@ -69,7 +71,14 @@ export class AssistantService implements IAssistantService {
     }
 
     public async processCommand(command: string): Promise<boolean> {
-        const lowerCaseCommand = command.toLowerCase();
+        try {
+            // Sanitizace vstupu (odstraňuje řídicí znaky, omezuje délku)
+            const sanitizedCommand = Validators.sanitizeText(command, Limits.COMMAND_MAX);
+            if (!sanitizedCommand) {
+                console.warn('Prázdný nebo neplatný příkaz po sanitizaci.');
+                return false;
+            }
+            const lowerCaseCommand = sanitizedCommand.toLowerCase();
         const actions = this.settingsService.getActions();
 
         const matchedAction = actions.find(action =>
@@ -80,7 +89,7 @@ export class AssistantService implements IAssistantService {
             // Check if we're offline
             if (!this.isOnline()) {
                 this.offlineService.queueCommand(
-                    command,
+                    sanitizedCommand,
                     matchedAction.name,
                     matchedAction.type,
                     matchedAction.url,
@@ -90,37 +99,40 @@ export class AssistantService implements IAssistantService {
                 if (this.notificationService.isEnabled()) {
                     this.notificationService.showWarning(
                         'Offline režim',
-                        `Příkaz "${command}" byl uložen do fronty pro pozdější zpracování.`
+                        `Příkaz "${sanitizedCommand}" byl uložen do fronty pro pozdější zpracování.`
                     );
                 }
 
-                if (this.ttsService.isEnabled()) {
-                    await this.ttsService.speak("Jsem offline. Příkaz byl uložen do fronty.");
-                }
+                await this.speakSafely("Jsem offline. Příkaz byl uložen do fronty.");
 
                 return false;
             }
 
             if (matchedAction.type === 'webhook') {
                 const success = await this.commandProcessor.executeWebhookAction(matchedAction);
-                if (success && this.ttsService.isEnabled()) {
-                    await this.ttsService.speak(`Akce ${matchedAction.name} byla úspěšně provedena.`);
+                if (success) {
+                    await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
                 }
                 return success;
             } else if (matchedAction.type === 'tasker') {
                 const success = this.commandProcessor.executeTaskerAction(matchedAction);
-                if (success && this.ttsService.isEnabled()) {
-                    await this.ttsService.speak(`Akce ${matchedAction.name} byla úspěšně provedena.`);
+                if (success) {
+                    await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
                 }
                 return success;
             }
         }
 
-        console.log(`Pro příkaz "${command}" nebyla nalezena žádná akce.`);
-        if (this.ttsService.isEnabled()) {
-            await this.ttsService.speak("Bohužel jsem nenašel odpovídající akci.");
-        }
+        console.log(`Pro příkaz "${sanitizedCommand}" nebyla nalezena žádná akce.`);
+        await this.speakSafely("Bohužel jsem nenašel odpovídající akci.");
         return false;
+        } catch (error) {
+            const message = ErrorHandler.handle('AssistantService.processCommand', error);
+            if (this.notificationService.isEnabled()) {
+                this.notificationService.showError('Chyba', `Při zpracování příkazu došlo k chybě: ${message}`);
+            }
+            return false;
+        }
     }
 
     private isOnline(): boolean {
@@ -143,11 +155,15 @@ export class AssistantService implements IAssistantService {
     }
 
     public async processOfflineQueue(): Promise<{ processed: number; failed: number }> {
-        if (this.isOnline()) {
-            return this.offlineService.processAllCommands(
-                (url: string) => this.commandProcessor.executeWebhookUrl(url),
-                (taskName: string) => this.commandProcessor.executeTaskerTaskName(taskName)
-            );
+        try {
+            if (this.isOnline()) {
+                return await this.offlineService.processAllCommands(
+                    (url: string) => this.commandProcessor.executeWebhookUrl(url),
+                    (taskName: string) => this.commandProcessor.executeTaskerTaskName(taskName)
+                );
+            }
+        } catch (error) {
+            ErrorHandler.handle('AssistantService.processOfflineQueue', error);
         }
         return { processed: 0, failed: 0 };
     }
@@ -158,5 +174,18 @@ export class AssistantService implements IAssistantService {
 
     public isOfflineModeActive(): boolean {
         return this.offlineService.isOfflineModeActive();
+    }
+
+    /**
+     * Bezpečné TTS oznámení - chyba TTS nesmí přerušit zpracování příkazu.
+     */
+    private async speakSafely(text: string): Promise<void> {
+        try {
+            if (this.ttsService?.isEnabled?.()) {
+                await this.ttsService.speak(text);
+            }
+        } catch (error) {
+            ErrorHandler.handle('AssistantService.speakSafely', error);
+        }
     }
 }

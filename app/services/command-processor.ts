@@ -10,6 +10,9 @@ import { NotificationService } from './notification.service';
 import { TextToSpeechService } from './text-to-speech.service';
 import { LoggerService } from '../utils/logger';
 import { ErrorHandler } from '../utils/error-handler';
+import { Validators } from '../utils/validation';
+import { fetchWithTimeout } from '../utils/network';
+import { retryWithBackoff } from '../utils/retry';
 import {
     ISettingsService,
     ITaskerService,
@@ -32,6 +35,11 @@ export interface CommandProcessorDeps {
 }
 
 export class CommandProcessor implements ICommandProcessor {
+    /** Timeout pro jeden HTTP požadavek (ms). */
+    private readonly REQUEST_TIMEOUT_MS = 15000;
+    /** Počet opakování při selhání webhooku. */
+    private readonly WEBHOOK_RETRIES = 2;
+
     private settingsService: ISettingsService;
     private taskerService: ITaskerService;
     private historyService: IHistoryService;
@@ -52,7 +60,19 @@ export class CommandProcessor implements ICommandProcessor {
 
     /** Spustí Tasker úlohu definovanou akcí (včetně historie, notifikací a logu). */
     public executeTaskerAction(action: Action): boolean {
-        console.log(`Příkaz nalezen: "${action.name}". Spouštím úlohu v Taskeru: ${action.taskName}`);
+        console.log(`Příkaz nalezen: "${action?.name}". Spouštím úlohu v Taskeru: ${action?.taskName}`);
+        // Null check: akce bez názvu úlohy nemůže být provedena
+        if (!action?.taskName) {
+            console.error(`Tasker akce "${action?.name ?? 'neznámá'}" nemá nastavený název úlohy.`);
+            this.historyService.addCommand(
+                action?.phrase ?? '',
+                action?.name ?? 'neznámá akce',
+                'tasker',
+                'error',
+                'Chybí název Tasker úlohy'
+            );
+            return false;
+        }
         const success = this.taskerService.executeTask(action.taskName);
         const status: CommandStatus = success ? 'success' : 'error';
         this.historyService.addCommand(
@@ -106,8 +126,37 @@ export class CommandProcessor implements ICommandProcessor {
             return true;
         }
 
+        // Null check a URL validace před síťovým voláním
+        if (!action?.url) {
+            console.error(`Webhook akce "${action?.name ?? 'neznámá'}" nemá nastavenou URL.`);
+            this.historyService.addCommand(
+                action?.phrase ?? '',
+                action?.name ?? 'neznámá akce',
+                'webhook',
+                'error',
+                'Chybí URL webhooku'
+            );
+            return false;
+        }
+        if (!Validators.isValidWebhookUrl(action.url)) {
+            console.error(`Neplatná webhook URL akce "${action.name}": ${action.url}`);
+            this.logger.error(`Neplatná URL webhooku: ${action.name} - ${action.url}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'webhook',
+                'error',
+                'Neplatná URL webhooku'
+            );
+            return false;
+        }
+
         try {
-            const response = await fetch(action.url, this.buildFetchOptions(action.url, webhookAuth));
+            // fetch s timeoutem a retry s exponential backoff
+            const response = await retryWithBackoff(
+                () => fetchWithTimeout(action.url, this.buildFetchOptions(action.url, webhookAuth), this.REQUEST_TIMEOUT_MS),
+                { retries: this.WEBHOOK_RETRIES, baseDelayMs: 1000 }
+            );
 
             if (response.ok) {
                 console.log(`Webhook ${action.name} úspěšně zavolán.`);
@@ -134,34 +183,35 @@ export class CommandProcessor implements ICommandProcessor {
 
                 return true;
             } else {
-                console.error(`Chyba při volání webhooku ${action.name}: ${response.statusText}`);
-                this.logger.error(`${action.name} - ${response.statusText}`);
+                const statusText = response.statusText ?? 'neznámá chyba';
+                console.error(`Chyba při volání webhooku ${action.name}: ${statusText}`);
+                this.logger.error(`${action.name} - ${statusText}`);
                 this.historyService.addCommand(
                     action.phrase,
                     action.name,
                     'webhook',
                     'error',
-                    response.statusText
+                    response.statusText ?? 'neznámá chyba'
                 );
 
                 if (this.notificationService.isEnabled()) {
                     this.notificationService.showError(
                         'Chyba webhooku',
-                        `Nepodařilo se zavolat webhook ${action.name}: ${response.statusText}`
+                        `Nepodařilo se zavolat webhook ${action.name}: ${response.statusText ?? 'neznámá chyba'}`
                     );
                 }
 
                 return false;
             }
         } catch (error) {
-            console.error(`Chyba sítě při volání webhooku ${action.name}:`, error);
-            this.logger.networkError(`${action.name} - ${ErrorHandler.toMessage(error)}`);
+            const message = ErrorHandler.handle(`Webhook ${action.name}`, error);
+            this.logger.networkError(`${action.name} - ${message}`);
             this.historyService.addCommand(
                 action.phrase,
                 action.name,
                 'webhook',
                 'network_error',
-                ErrorHandler.toMessage(error)
+                message
             );
 
             if (this.notificationService.isEnabled()) {
@@ -177,11 +227,16 @@ export class CommandProcessor implements ICommandProcessor {
 
     /** Zavolá webhook URL s autentizací (používá se pro offline frontu). */
     public async executeWebhookUrl(url: string): Promise<boolean> {
+        if (!Validators.isValidWebhookUrl(url)) {
+            console.error('Neplatná URL webhooku (offline fronta):', url);
+            return false;
+        }
         try {
-            const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
-            const response = await fetch(url, this.buildFetchOptions(url, webhookAuth));
-            return response.ok;
-        } catch {
+            const webhookAuth: WebhookAuth = this.settingsService?.getWebhookAuth() ?? {};
+            const response = await fetchWithTimeout(url, this.buildFetchOptions(url, webhookAuth), this.REQUEST_TIMEOUT_MS);
+            return response?.ok ?? false;
+        } catch (error) {
+            ErrorHandler.handle('CommandProcessor.executeWebhookUrl', error);
             return false;
         }
     }

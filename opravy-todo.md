@@ -33,17 +33,17 @@
 - [x] Extrahovat společný kód do utility tříd (IdGenerator, Logger, ErrorHandler)
 
 ### Validace
-- [ ] Přidat URL validaci (regex) pro webhooky
-- [ ] Validovat délku a formát textových polí
-- [ ] Implementovat sanitizaci vstupů
-- [ ] Přidat null checks pro všechny externí volání
-- [ ] Používat optional chaining a nullish coalescing
+- [x] Přidat URL validaci (regex) pro webhooky
+- [x] Validovat délku a formát textových polí
+- [x] Implementovat sanitizaci vstupů
+- [x] Přidat null checks pro všechny externí volání
+- [x] Používat optional chaining a nullish coalescing
 
 ### Error Handling
-- [ ] Přidat try-catch pro všechny async operace
-- [ ] Implementovat centralizovaný error handler
-- [ ] Implementovat retry mechanismus s exponential backoff
-- [ ] Přidat timeout pro síťové požadavky
+- [x] Přidat try-catch pro všechny async operace
+- [x] Implementovat centralizovaný error handler
+- [x] Implementovat retry mechanismus s exponential backoff
+- [x] Přidat timeout pro síťové požadavky
 
 ---
 

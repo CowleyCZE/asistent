@@ -1,21 +1,20 @@
 import { Observable, Frame } from '@nativescript/core';
 import { SpeechRecognitionService } from './services/speech-recognition.service';
 import { TranslatorService } from './services/translator.service';
-import { AssistantService } from './services/assistant.service';
 import { PermissionsService } from './services/permissions.service';
-import { SettingsService } from './services/settings.service';
 import { FeedbackService } from './services/feedback.service';
-import { NotificationService } from './services/notification.service';
+import { serviceLocator, ServiceTokens } from './services/service-locator';
+import { IAssistantService, ISettingsService, INotificationService } from './services/service-interfaces';
 import { themeService } from './app';
 
 export class MainViewModel extends Observable {
     private speechService: SpeechRecognitionService;
     private translatorService: TranslatorService;
-    private assistantService: AssistantService;
+    private assistantService: IAssistantService;
     private permissionsService: PermissionsService;
-    private settingsService: SettingsService;
+    private settingsService: ISettingsService;
     private feedbackService: FeedbackService;
-    private notificationService: NotificationService;
+    private notificationService: INotificationService;
     
     private _isListening: boolean = false;
     private _status: string = "Kontrola oprávnění...";
@@ -28,13 +27,14 @@ export class MainViewModel extends Observable {
     constructor() {
         super();
         
-        this.speechService = new SpeechRecognitionService();
-        this.translatorService = new TranslatorService();
-        this.assistantService = new AssistantService();
-        this.permissionsService = new PermissionsService();
-        this.settingsService = new SettingsService();
-        this.feedbackService = new FeedbackService();
-        this.notificationService = new NotificationService();
+        // Služby řešíme přes ServiceLocator (Dependency Injection)
+        this.speechService = serviceLocator.get<SpeechRecognitionService>(ServiceTokens.SpeechRecognitionService);
+        this.translatorService = serviceLocator.get<TranslatorService>(ServiceTokens.TranslatorService);
+        this.assistantService = serviceLocator.get<IAssistantService>(ServiceTokens.AssistantService);
+        this.permissionsService = serviceLocator.get<PermissionsService>(ServiceTokens.PermissionsService);
+        this.settingsService = serviceLocator.get<ISettingsService>(ServiceTokens.SettingsService);
+        this.feedbackService = serviceLocator.get<FeedbackService>(ServiceTokens.FeedbackService);
+        this.notificationService = serviceLocator.get<INotificationService>(ServiceTokens.NotificationService);
         
         this.checkPermissions();
         this.setupSpeechRecognition();

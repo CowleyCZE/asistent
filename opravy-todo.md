@@ -1,7 +1,7 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 2. listopadu 2024
-**Celkový počet úkolů:** 109
+**Poslední aktualizace:** 3. listopadu 2026
+**Celkový počet úkolů:** 110
 
 ---
 
@@ -19,15 +19,16 @@
 - [x] Odstranit duplicitní import knownFolders v app/services/offline.service.ts
 - [x] Implementovat dispose() metody pro všechny služby (speech-recognition, feedback, tts)
 - [x] Zaregistrovat cleanup v Application exit event
+- [x] Opravit neuzavřenou metodu isOfflineModeActive() v app/services/assistant.service.ts (syntax error) #nová-chyba
 
 ---
 
 ## P1 - DŮLEŽITÉ (Vysoká priorita)
 
 ### Architektonické problémy
-- [ ] Implementovat Dependency Injection container
-- [ ] Vytvořit ServiceLocator
-- [ ] Používat interface místo konkrétních tříd
+- [x] Implementovat Dependency Injection container
+- [x] Vytvořit ServiceLocator
+- [x] Používat interface místo konkrétních tříd
 - [ ] Rozdělit AssistantService na menší třídy (CommandProcessor, LoggerService)
 - [ ] Extrahovat společný kód do utility tříd (IdGenerator, Logger, ErrorHandler)
 
@@ -163,12 +164,12 @@
 
 ## STATISTIKA
 
-- P0 (Kritické): 9 úkolů
+- P0 (Kritické): 10 úkolů
 - P1 (Důležité): 25 úkolů
 - P2 (Střední): 35 úkolů
 - P3 (Nízká): 30 úkolů
 - P4 (Dlouhodobé): 10 úkolů
-- **Celkem: 109 úkolů**
+- **Celkem: 110 úkolů**
 
 ---
 

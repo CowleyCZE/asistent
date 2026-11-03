@@ -6,24 +6,50 @@ import { CacheService } from './cache.service';
 import { OfflineService } from './offline.service';
 import { NotificationService } from './notification.service';
 import { knownFolders } from '@nativescript/core';
+import {
+    ISettingsService,
+    ITaskerService,
+    IHistoryService,
+    ITextToSpeechService,
+    ICacheService,
+    IOfflineService,
+    INotificationService,
+    IAssistantService
+} from './service-interfaces';
 
-export class AssistantService {
-    private settingsService: SettingsService;
-    private taskerService: TaskerService;
-    private historyService: HistoryService;
-    private ttsService: TextToSpeechService;
-    private cacheService: CacheService;
-    private offlineService: OfflineService;
-    private notificationService: NotificationService;
+/**
+ * Závislosti AssistantService pro constructor injection.
+ * Všechny závislosti jsou volitelné - pokud nejsou předány,
+ * použijí se výchozí konkrétní implementace.
+ */
+export interface AssistantServiceDeps {
+    settingsService?: ISettingsService;
+    taskerService?: ITaskerService;
+    historyService?: IHistoryService;
+    ttsService?: ITextToSpeechService;
+    cacheService?: ICacheService;
+    offlineService?: IOfflineService;
+    notificationService?: INotificationService;
+}
 
-    constructor() {
-        this.settingsService = new SettingsService();
-        this.taskerService = new TaskerService();
-        this.historyService = new HistoryService();
-        this.ttsService = new TextToSpeechService();
-        this.cacheService = new CacheService();
-        this.offlineService = new OfflineService();
-        this.notificationService = new NotificationService();
+export class AssistantService implements IAssistantService {
+    private settingsService: ISettingsService;
+    private taskerService: ITaskerService;
+    private historyService: IHistoryService;
+    private ttsService: ITextToSpeechService;
+    private cacheService: ICacheService;
+    private offlineService: IOfflineService;
+    private notificationService: INotificationService;
+
+    constructor(deps: AssistantServiceDeps = {}) {
+        // Constructor injection - umožňuje předat mock implementace v testech
+        this.settingsService = deps.settingsService ?? new SettingsService();
+        this.taskerService = deps.taskerService ?? new TaskerService();
+        this.historyService = deps.historyService ?? new HistoryService();
+        this.ttsService = deps.ttsService ?? new TextToSpeechService();
+        this.cacheService = deps.cacheService ?? new CacheService();
+        this.offlineService = deps.offlineService ?? new OfflineService();
+        this.notificationService = deps.notificationService ?? new NotificationService();
     }
 
     public async processCommand(command: string): Promise<boolean> {
@@ -303,7 +329,7 @@ export class AssistantService {
 
     public isOfflineModeActive(): boolean {
         return this.offlineService.isOfflineModeActive();
-
+    }
 
     private generateHmacSignature(message: string, secret: string): string {
         // Simple HMAC simulation using SHA-256
@@ -313,7 +339,7 @@ export class AssistantService {
         const hmac = crypto.createHmac('sha256', secret);
         hmac.update(message);
         return hmac.digest('hex');
-    }    }
+    }
 
     private logToFile(message: string) {
         const documents = knownFolders.documents();

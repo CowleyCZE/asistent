@@ -1,4 +1,5 @@
 import { ApplicationSettings, knownFolders } from '@nativescript/core';
+import { IdGenerator } from '../utils/id-generator';
 
 export interface OfflineCommand {
     id: string;
@@ -37,7 +38,7 @@ export class OfflineService {
         const queue = this.getQueue();
         
         const newEntry: OfflineCommand = {
-            id: this.generateId(),
+            id: IdGenerator.generate(),
             command,
             actionName,
             actionType,
@@ -251,10 +252,6 @@ export class OfflineService {
 
         this.saveQueue(queue);
         return requeued;
-    }
-
-    private generateId(): string {
-        return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     }
 
     private saveQueue(queue: OfflineCommand[]): void {

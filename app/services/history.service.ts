@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+import { IdGenerator } from '../utils/id-generator';
 
 export type CommandStatus = 'success' | 'error' | 'network_error';
 export type ActionType = 'webhook' | 'tasker' | 'unknown';
@@ -34,7 +35,7 @@ export class HistoryService {
     ): void {
         const history = this.getHistory();
         const newEntry: CommandHistory = {
-            id: this.generateId(),
+            id: IdGenerator.generate(),
             command,
             actionName,
             actionType,
@@ -133,10 +134,6 @@ export class HistoryService {
     public exportHistoryJSON(): string {
         const history = this.getHistory();
         return JSON.stringify(history, null, 2);
-    }
-
-    private generateId(): string {
-        return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     }
 
     private saveHistory(history: CommandHistory[]): void {

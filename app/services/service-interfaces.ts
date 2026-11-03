@@ -52,3 +52,21 @@ export interface IAssistantService {
     getOfflineQueueCount(): number;
     isOfflineModeActive(): boolean;
 }
+
+export interface ILoggerService {
+    info(message: string): void;
+    success(message: string): void;
+    error(message: string): void;
+    networkError(message: string): void;
+}
+
+export interface ICommandProcessor {
+    /** Spustí webhook akci (cache, historie, notifikace). */
+    executeWebhookAction(action: Action): Promise<boolean>;
+    /** Spustí Tasker akci (historie, notifikace). */
+    executeTaskerAction(action: Action): boolean;
+    /** Zavolá webhook URL s autentizací (offline fronta). */
+    executeWebhookUrl(url: string): Promise<boolean>;
+    /** Spustí Tasker úlohu podle názvu (offline fronta). */
+    executeTaskerTaskName(taskName: string): boolean;
+}

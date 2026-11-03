@@ -29,8 +29,8 @@
 - [x] Implementovat Dependency Injection container
 - [x] Vytvořit ServiceLocator
 - [x] Používat interface místo konkrétních tříd
-- [ ] Rozdělit AssistantService na menší třídy (CommandProcessor, LoggerService)
-- [ ] Extrahovat společný kód do utility tříd (IdGenerator, Logger, ErrorHandler)
+- [x] Rozdělit AssistantService na menší třídy (CommandProcessor, LoggerService)
+- [x] Extrahovat společný kód do utility tříd (IdGenerator, Logger, ErrorHandler)
 
 ### Validace
 - [ ] Přidat URL validaci (regex) pro webhooky

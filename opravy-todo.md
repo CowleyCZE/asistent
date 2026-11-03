@@ -68,9 +68,9 @@
 ### Výkon
 - [ ] Optimalizovat MP3 soubory v app/assets/sounds/ (nižší bitrate)
 - [ ] Zvažit použití OGG formátu pro zvuky
-- [ ] Implementovat TTL-based cache cleanup
-- [ ] Přidat size-based cache eviction
-- [ ] Implementovat lazy loading pro stránky
+- [x] Implementovat TTL-based cache cleanup
+- [x] Přidat size-based cache eviction
+- [x] Implementovat lazy loading pro stránky
 
 ### Kódová kvalita
 - [ ] Zapnout strict: true v tsconfig.json

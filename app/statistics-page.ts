@@ -1,7 +1,21 @@
 import { EventData, Page } from '@nativescript/core';
 import { StatisticsViewModel } from './statistics-view-model';
 
+// Lazy loading – view-model se vytvoří až při první navigaci
+// a další navigace používají již existující (cached) instanci.
+let viewModel: StatisticsViewModel | null = null;
+
 export function navigatingTo(args: EventData) {
     const page = <Page>args.object;
-    page.bindingContext = new StatisticsViewModel();
+    if (!viewModel) {
+        viewModel = new StatisticsViewModel();
+    }
+    page.bindingContext = viewModel;
+}
+
+/**
+ * Zahodí cached view-model (např. pro testování nebo úplný refresh stránky).
+ */
+export function resetViewModel(): void {
+    viewModel = null;
 }

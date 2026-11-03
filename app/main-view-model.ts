@@ -1,4 +1,5 @@
-import { Observable, Frame } from '@nativescript/core';
+import { Observable } from '@nativescript/core';
+import { LazyNavigator } from './utils/navigation';
 import { SpeechRecognitionService } from './services/speech-recognition.service';
 import { TranslatorService } from './services/translator.service';
 import { PermissionsService } from './services/permissions.service';
@@ -214,12 +215,9 @@ export class MainViewModel extends Observable {
     }
 
     public showSettings() {
-        Frame.topmost().navigate({
-            moduleName: "settings-page",
-            transition: {
-                name: "slide"
-            }
-        });
+        // Lazy loading – stránka nastavení se (včetně view-modelu a služeb)
+        // načte až při první navigaci
+        LazyNavigator.navigate("settings-page");
     }
 
     public async processOfflineQueue() {

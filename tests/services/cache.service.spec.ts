@@ -94,6 +94,38 @@ describe('CacheService', () => {
         expect(service.get('err')).toBeNull();
     });
 
+    it('cleanupExpired odstraní expirované záznamy', () => {
+        const nowSpy = jest.spyOn(Date, 'now');
+        const t0 = Date.now();
+        service.set('stare', 'x', 1000);
+        nowSpy.mockReturnValue(t0 + 5000);
+        expect(service.cleanupExpired()).toBe(1);
+        expect(service.cleanupExpired()).toBe(0);
+        nowSpy.mockRestore();
+        expect(service.has('stare')).toBe(false);
+    });
+
+    it('cleanupExpired odstraní poškozené záznamy', () => {
+        ApplicationSettings.setString('cache_rozbite', 'not-json{{{');
+        expect(service.cleanupExpired()).toBe(1);
+        expect(service.cleanupExpired()).toBe(0);
+    });
+
+    it('evictBySize odstraní nejstarší záznamy nad limit', () => {
+        // Zápisy přímo do úložiště obejdou automatickou evikci v set()
+        for (let i = 0; i < 60; i++) {
+            ApplicationSettings.setString(
+                'cache_k' + i,
+                JSON.stringify({ data: i, timestamp: 1000 + i, ttl: 999999999 })
+            );
+        }
+        expect(service.evictBySize()).toBe(10);
+        const stats = service.getStats();
+        expect(stats.size).toBe(50);
+        expect(stats.keys).not.toContain('k0');
+        expect(stats.keys).toContain('k59');
+    });
+
     it('prefetch uloží data do cache', async () => {
         const fetcher = jest.fn().mockResolvedValue('prefetch-data');
         await service.prefetch('pf', fetcher as any);

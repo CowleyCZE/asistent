@@ -92,6 +92,7 @@ export class CacheService {
      * Get cache statistics
      */
     public getStats(): { size: number; keys: string[] } {
+        this.cleanupExpired();
         const allKeys = ApplicationSettings.allKeys();
         const cacheKeys = allKeys.filter(key => key.startsWith(this.CACHE_PREFIX));
         return {
@@ -101,37 +102,91 @@ export class CacheService {
     }
 
     /**
-     * Clean up expired cache entries
+     * TTL-based cleanup – odstraní všechny expirované (a poškozené) záznamy z cache.
+     * @returns Počet odstraněných záznamů.
+     */
+    public cleanupExpired(): number {
+        let removed = 0;
+        const allKeys = ApplicationSettings.allKeys();
+
+        allKeys.forEach(key => {
+            if (!key.startsWith(this.CACHE_PREFIX)) {
+                return;
+            }
+            const cached = ApplicationSettings.getString(key);
+            if (!cached) {
+                return;
+            }
+            try {
+                const entry: CacheEntry<any> = JSON.parse(cached);
+                if (Date.now() - entry.timestamp > entry.ttl) {
+                    ApplicationSettings.remove(key);
+                    removed++;
+                }
+            } catch {
+                // Poškozený záznam odstraníme, aby nezabíral místo
+                ApplicationSettings.remove(key);
+                removed++;
+            }
+        });
+
+        return removed;
+    }
+
+    /**
+     * Size-based eviction – pokud cache překročí maximální velikost,
+     * odstraní nejstarší záznamy (podle timestamp) až do dosažení limitu.
+     * @returns Počet odstraněných záznamů.
+     */
+    public evictBySize(): number {
+        const entries = this.getEntriesWithTimestamps();
+        let removed = 0;
+
+        while (entries.length > this.MAX_CACHE_SIZE) {
+            const oldest = entries.shift();
+            if (!oldest) {
+                break;
+            }
+            ApplicationSettings.remove(oldest.key);
+            removed++;
+        }
+
+        return removed;
+    }
+
+    private getEntriesWithTimestamps(): Array<{ key: string; timestamp: number }> {
+        const allKeys = ApplicationSettings.allKeys();
+        const entries: Array<{ key: string; timestamp: number }> = [];
+
+        allKeys.forEach(key => {
+            if (!key.startsWith(this.CACHE_PREFIX)) {
+                return;
+            }
+            const cached = ApplicationSettings.getString(key);
+            if (cached) {
+                try {
+                    const entry: CacheEntry<any> = JSON.parse(cached);
+                    entries.push({ key, timestamp: entry.timestamp });
+                } catch {
+                    entries.push({ key, timestamp: 0 });
+                }
+            } else {
+                entries.push({ key, timestamp: 0 });
+            }
+        });
+
+        // Nejstarší záznamy první (LRU-like evikce podle stáří záznamu)
+        entries.sort((a, b) => a.timestamp - b.timestamp);
+        return entries;
+    }
+
+    /**
+     * Kompletní údržba cache – TTL cleanup + size-based eviction.
+     * Volá se automaticky po každém zápisu do cache.
      */
     private cleanupCache(): void {
-        const allKeys = ApplicationSettings.allKeys();
-        const cacheKeys = allKeys.filter(key => key.startsWith(this.CACHE_PREFIX));
-        
-        if (cacheKeys.length > this.MAX_CACHE_SIZE) {
-            // Sort by timestamp (oldest first) and remove excess
-            const entriesWithTimestamps = cacheKeys.map(key => {
-                const cached = ApplicationSettings.getString(key);
-                if (cached) {
-                    try {
-                        const entry: CacheEntry<any> = JSON.parse(cached);
-                        return { key, timestamp: entry.timestamp };
-                    } catch {
-                        return { key, timestamp: 0 };
-                    }
-                }
-                return { key, timestamp: 0 };
-            }).filter(e => e.timestamp > 0);
-            
-            entriesWithTimestamps.sort((a, b) => a.timestamp - b.timestamp);
-            
-            // Remove oldest entries to get back to max size
-            while (entriesWithTimestamps.length > this.MAX_CACHE_SIZE) {
-                const oldest = entriesWithTimestamps.shift();
-                if (oldest) {
-                    ApplicationSettings.remove(oldest.key);
-                }
-            }
-        }
+        this.cleanupExpired();
+        this.evictBySize();
     }
 
     /**

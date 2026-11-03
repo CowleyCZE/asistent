@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run unit tests with coverage
+        run: npm test -- --coverage
+
       - name: Setup NativeScript
         run: |
           npm install -g nativescript@8.3.0

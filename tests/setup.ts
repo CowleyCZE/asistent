@@ -1,13 +1,6 @@
 // Jest setup file
-// Mock @nativescript/core module
-jest.mock('@nativescript/core', () => ({
-    ApplicationSettings: require('./mocks/application-settings.mock').ApplicationSettings,
-    knownFolders: require('./mocks/nativescript-core.mock').knownFolders,
-    Frame: require('./mocks/nativescript-core.mock').Frame,
-    Observable: require('./mocks/nativescript-core.mock').Observable,
-    EventData: require('./mocks/nativescript-core.mock').EventData,
-    Page: require('./mocks/nativescript-core.mock').Page
-}));
+// Mock @nativescript/core module (celý mock modul, aby zůstal kompatibilní i s budoucími exporty)
+jest.mock('@nativescript/core', () => require('./mocks/nativescript-core.mock'));
 
 // Mock fetch for testing
 if (!global.fetch) {

@@ -14,7 +14,16 @@ module.exports = {
     '!app/services/**/*.spec.ts'
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['text', 'text-summary', 'lcov', 'html'],
+  // Cíl: 80%+ – prahy jsou nastaveny konzervativně a budou postupně zvyšovány
+  coverageThreshold: {
+    global: {
+      statements: 70,
+      branches: 50,
+      functions: 70,
+      lines: 70
+    }
+  },
   verbose: true,
   testTimeout: 10000
 };

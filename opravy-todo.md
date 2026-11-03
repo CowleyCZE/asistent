@@ -50,20 +50,20 @@
 ## P2 - STŘEDNÍ PRIORITA
 
 ### Testování
-- [ ] Vytvořit unit testy pro speech-recognition.service.ts
-- [ ] Vytvořit unit testy pro theme.service.ts
-- [ ] Vytvořit unit testy pro feedback.service.ts
-- [ ] Vytvořit unit testy pro cache.service.ts
-- [ ] Vytvořit unit testy pro offline.service.ts
-- [ ] Vytvořit unit testy pro notification.service.ts
-- [ ] Vytvořit unit testy pro translator.service.ts
-- [ ] Vytvořit unit testy pro tasker.service.ts
-- [ ] Vytvořit unit testy pro text-to-speech.service.ts
-- [ ] Vytvořit unit testy pro history.service.ts
-- [ ] Vytvořit unit testy pro statistics.service.ts
-- [ ] Nastavit Jest coverage reporting (cíl: 80%+)
-- [ ] Přidat CI check pro minimální coverage
-- [ ] Nastavit Appium pro E2E testy
+- [x] Vytvořit unit testy pro speech-recognition.service.ts
+- [x] Vytvořit unit testy pro theme.service.ts
+- [x] Vytvořit unit testy pro feedback.service.ts
+- [x] Vytvořit unit testy pro cache.service.ts
+- [x] Vytvořit unit testy pro offline.service.ts
+- [x] Vytvořit unit testy pro notification.service.ts
+- [x] Vytvořit unit testy pro translator.service.ts
+- [x] Vytvořit unit testy pro tasker.service.ts
+- [x] Vytvořit unit testy pro text-to-speech.service.ts
+- [x] Vytvořit unit testy pro history.service.ts
+- [x] Vytvořit unit testy pro statistics.service.ts
+- [x] Nastavit Jest coverage reporting (cíl: 80%+)
+- [x] Přidat CI check pro minimální coverage
+- [x] Nastavit Appium pro E2E testy
 
 ### Výkon
 - [ ] Optimalizovat MP3 soubory v app/assets/sounds/ (nižší bitrate)

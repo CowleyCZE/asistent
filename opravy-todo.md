@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026
+**Poslední aktualizace:** 4. listopadu 2026 (2. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -76,14 +76,15 @@
 - [x] Zapnout strict: true v tsconfig.json (včetně noImplicitAny a strictNullChecks)
 - [x] Zapnout noImplicitAny: true (implikováno strict: true)
 - [x] Zapnout strictNullChecks: true (implikováno strict: true)
-- [ ] Opravit všechny typové chyby (nový CI krok `npm run typecheck` = `tsc --noEmit` ověří; čeká na výsledek CI běhu)
+- [x] Opravit všechny typové chyby (65 chyb pod strict mode opraveno v commitu b000768; CI krok `npm run typecheck` prošel ✅)
 - [ ] Přidat JSDoc pro všechny veřejné metody
 - [x] Vytvořit constants soubor pro magic strings
 - [ ] Standardizovat naming konvence
 
 ### Nové chyby
 - [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
-- [ ] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, nutno ověřit testy) #nová-chyba
+- [x] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, ověřeno type checkem) #nová-chyba
+- [ ] Opravit unit testy v CI – krok "Run unit tests with coverage" selhává (exit 1) již od starších commitů (#4–#11): assistant.service.spec.ts je zastaralý vůči refaktoringu na CommandProcessor (mockuje taskerService přímo na AssistantService; čeká global.fetch bez timeout/retry wraperu); CI se kvůli tomu nikdy nedostane k Android buildu #nová-chyba
 
 ---
 

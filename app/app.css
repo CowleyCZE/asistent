@@ -212,3 +212,70 @@
 .shadow-theme {
     box-shadow: 0 2px 4px var(--shadow-color);
 }
+
+/* ============================================
+   RESPONSIVE LAYOUTY (P3)
+   Media queries pro různé velikosti displejů
+   ============================================ */
+
+/* Tablety a velké displeje (šířka >= 720dp): větší odsazení a typografie */
+@media screen and (min-width: 720) {
+    .p-4 {
+        padding: 24;
+    }
+
+    .p-3 {
+        padding: 20;
+    }
+
+    .text-lg {
+        font-size: 20;
+    }
+
+    .text-2xl {
+        font-size: 34;
+    }
+
+    Button {
+        min-height: 52;
+        min-width: 88;
+    }
+
+    .rounded-lg {
+        border-radius: 12;
+    }
+}
+
+/* Malé telefony (šířka <= 360dp): kompaktnější odsazení */
+@media screen and (max-width: 360) {
+    .p-4 {
+        padding: 12;
+    }
+
+    .text-2xl {
+        font-size: 20;
+    }
+
+    Button {
+        min-height: 44;
+    }
+}
+
+/* Landscape orientace: menší svislé odsazení pro více obsahu na obrazovce */
+@media screen and (orientation: landscape) {
+    .p-4 {
+        padding: 12;
+    }
+
+    .space-y-6 {
+        margin: 0;
+    }
+
+    .text-2xl {
+        font-size: 22;
+    }
+
+    Button {
+        min-height: 44;
+    }
+}

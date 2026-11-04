@@ -7,16 +7,16 @@
                      visibility="{{ isOffline ? 'visible' : 'collapsed' }}" animation="slideIn">
             <Label text="⚠ Offline režim" class="font-bold flex-1" />
             <Label text="Fronta: {{ offlineQueueCount }}" class="text-sm" />
-            <Button text="Zpracovat" tap="{{ processOfflineQueue }}" class="bg-white text-orange-500 text-xs font-bold p-1 rounded ml-2" />
+            <Button text="Zpracovat" tap="{{ processOfflineQueue }}" accessibilityLabel="Zpracovat frontu offline příkazů" class="bg-white text-orange-500 text-xs font-bold p-1 rounded ml-2" />
         </StackLayout>
         
         <!-- Status indik\u00e1tor -->
         <Label text="{{ status }}" class="text-lg text-center font-bold text-theme-primary" textWrap="true" />
         
         <!-- Tla\u010d\u00edtko pro aktivaci -->
-        <Button text="{{ isListening ? 'Stop' : 'Start' }}" 
+        <Button text="{{ isListening ? 'Stop' : 'Start' }}" accessibilityLabel="{{ isListening ? 'Zastavit naslouchání' : 'Spustit naslouchání' }}" 
                 tap="{{ toggleListening }}" 
-                class="{{ isListening ? 'bg-red-500' : 'bg-green-500' }} text-white font-bold p-4 rounded-full btn-press transition-normal" />
+                class="{{ isListening ? 'bg-red-500' : 'bg-green-500' }} text-white font-bold p-4 rounded-full btn-press transition-normal btn-press" />
         
         <!-- Rozpoznan\u00fd text -->
         <StackLayout class="bg-theme-secondary p-4 rounded-lg shadow-theme" visibility="{{ recognizedText ? 'visible' : 'collapsed' }}" animation="fadeIn">
@@ -31,6 +31,6 @@
         </StackLayout>
         
         <!-- Nastaven\u00ed -->
-        <Button text="Nastaven\u00ed" tap="{{ showSettings }}" class="bg-gray-500 text-white font-bold p-2 rounded transition-normal" />
+        <Button text="Nastaven\u00ed" tap="{{ showSettings }}" accessibilityLabel="Otevřít nastavení" class="bg-gray-500 text-white font-bold p-2 rounded transition-normal btn-press" />
     </StackLayout>
 </Page>

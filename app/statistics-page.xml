@@ -144,8 +144,8 @@
             </StackLayout>
 
             <!-- Refresh button -->
-            <Button text="Obnovit statistiky" tap="{{ refresh }}" 
-                    class="bg-blue-500 text-white font-bold p-3 rounded-lg transition-normal" 
+            <Button text="Obnovit statistiky" tap="{{ refresh }}" accessibilityLabel="Obnovit statistiky" 
+                    class="bg-blue-500 text-white font-bold p-3 rounded-lg transition-normal btn-press" 
                     visibility="{{ !isLoading ? 'visible' : 'collapsed' }}" />
         </StackLayout>
     </ScrollView>

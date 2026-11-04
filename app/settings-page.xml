@@ -9,29 +9,29 @@
             <!-- Aktiva\u010dn\u00ed fr\u00e1ze -->
             <Label text="Aktiva\u010dn\u00ed fr\u00e1ze" class="text-lg font-bold text-theme-primary" />
             <GridLayout columns="*, auto" class="mb-2">
-                <TextField col="0" text="{{ currentPhrase }}" hint="Zadejte novou fr\u00e1zi" 
+                <TextField col="0" text="{{ currentPhrase }}" accessibilityLabel="Pole pro novou aktivační frázi" hint="Zadejte novou fr\u00e1zi" 
                           class="p-2 bg-theme-secondary rounded border-theme border-width-1 text-theme-primary" />
-                <Button col="1" text="P\u0159idat" tap="{{ addPhrase }}" 
-                        class="ml-2 bg-blue-500 text-white font-bold rounded-lg transition-normal" />
+                <Button col="1" text="P\u0159idat" tap="{{ addPhrase }}" accessibilityLabel="Přidat aktivační frázi" 
+                        class="ml-2 bg-blue-500 text-white font-bold rounded-lg transition-normal btn-press" />
             </GridLayout>
             
             <ListView items="{{ wakePhrases }}" class="bg-theme-secondary rounded-lg shadow-theme">
                 <ListView.itemTemplate>
                     <GridLayout columns="*, auto" class="p-2 border-b border-theme">
                         <Label col="0" text="{{ $value }}" class="text-theme-primary" />
-                        <Button col="1" text="Odstranit" tap="{{ $parent.removePhrase }}" 
-                                class="bg-red-500 text-white text-sm rounded transition-normal" />
+                        <Button col="1" text="Odstranit" tap="{{ $parent.removePhrase }}" accessibilityLabel="Odstranit aktivační frázi" 
+                                class="bg-red-500 text-white text-sm rounded transition-normal btn-press" />
                     </GridLayout>
                 </ListView.itemTemplate>
             </ListView>
 
             <!-- Zvukov\u00e1 zp\u011btn\u00e1 vazba -->
             <Label text="Zvukov\u00e1 zp\u011btn\u00e1 vazba" class="text-lg font-bold text-theme-primary mt-4" />
-            <Switch checked="{{ feedbackEnabled }}" class="ml-2" />
+            <Switch checked="{{ feedbackEnabled }}" accessibilityLabel="Zvuková zpětná vazba" class="ml-2" />
 
             <!-- Citlivost rozpozn\u00e1v\u00e1n\u00ed -->
             <Label text="Citlivost rozpozn\u00e1v\u00e1n\u00ed" class="text-lg font-bold text-theme-primary mt-4" />
-            <Slider value="{{ sensitivity }}" minValue="0" maxValue="1" class="ml-2" />
+            <Slider value="{{ sensitivity }}" accessibilityLabel="Citlivost rozpoznávání" minValue="0" maxValue="1" class="ml-2" />
             <Label text="{{ sensitivity | number:'1.1' }}" class="text-center text-theme-secondary" />
 
             <!-- Akce -->
@@ -61,7 +61,7 @@
                            visibility="{{ newActionType === 'tasker' ? 'visible' : 'collapsed' }}"
                            class="p-2 bg-white rounded mt-1 text-gray-800" />
 
-                <Button text="P\u0159idat akci" tap="{{ addAction }}" class="mt-2 bg-blue-500 text-white font-bold rounded-lg transition-normal" />
+                <Button text="P\u0159idat akci" tap="{{ addAction }}" accessibilityLabel="Přidat novou akci" class="mt-2 bg-blue-500 text-white font-bold rounded-lg transition-normal btn-press" />
             </StackLayout>
 
             <!-- Seznam akc\u00ed -->
@@ -78,19 +78,19 @@
                         <Label row="2" col="0" text="{{ type === 'webhook' ? url : taskName }}"
                                class="text-xs text-blue-400 mt-1" textWrap="true" />
 
-                        <Button row="0" rowspan="3" col="1" text="Odstranit" tap="{{ $parent.removeAction }}"
-                                class="bg-red-500 text-white text-sm rounded m-auto transition-normal" />
+                        <Button row="0" rowspan="3" col="1" text="Odstranit" tap="{{ $parent.removeAction }}" accessibilityLabel="Odstranit akci"
+                                class="bg-red-500 text-white text-sm rounded m-auto transition-normal btn-press" />
                     </GridLayout>
                 </ListView.itemTemplate>
             </ListView>
 
             <!-- Historie p\u0159\u00edkaz\u016f -->
-            <Button text="Historie p\u0159\u00edkaz\u016f" tap="{{ showHistory }}" 
-                    class="bg-purple-500 text-white font-bold p-3 rounded-lg mt-6 transition-normal" />
+            <Button text="Historie p\u0159\u00edkaz\u016f" tap="{{ showHistory }}" accessibilityLabel="Otevřít historii příkazů" 
+                    class="bg-purple-500 text-white font-bold p-3 rounded-lg mt-6 transition-normal btn-press" />
 
             <!-- Statistiky -->
-            <Button text="Statistiky pou\u017eit\u00ed" tap="{{ showStatistics }}" 
-                    class="bg-orange-500 text-white font-bold p-3 rounded-lg transition-normal" />
+            <Button text="Statistiky pou\u017eit\u00ed" tap="{{ showStatistics }}" accessibilityLabel="Otevřít statistiky použití" 
+                    class="bg-orange-500 text-white font-bold p-3 rounded-lg transition-normal btn-press" />
 
             <!-- TTS Nastaven\u00ed -->
             <Label text="Hlasov\u00e1 zp\u011btn\u00e1 vazba (TTS)" class="text-lg font-bold text-theme-primary mt-6 border-t-2 border-theme pt-4" />
@@ -98,7 +98,7 @@
             <StackLayout class="bg-theme-secondary p-4 rounded-lg shadow-theme space-y-3">
                 <!-- Povolit TTS -->
                 <StackLayout orientation="horizontal" class="space-x-2">
-                    <Switch checked="{{ ttsEnabled }}" class="mt-1" />
+                    <Switch checked="{{ ttsEnabled }}" accessibilityLabel="Povolit hlasovou zpětnou vazbu" class="mt-1" />
                     <Label text="Povolit hlasovou zp\u011btnou vazbu" class="text-theme-primary" />
                 </StackLayout>
 
@@ -120,18 +120,18 @@
                 <!-- V\u00fd\u0161ka hlasu -->
                 <StackLayout>
                     <Label text="V\u00fd\u0161ka hlasu: {{ ttsPitch | number:'1.1' }}" class="text-sm font-medium text-theme-secondary" />
-                    <Slider value="{{ ttsPitch }}" minValue="0.5" maxValue="2.0" step="0.1" class="ml-2" />
+                    <Slider value="{{ ttsPitch }}" accessibilityLabel="Výška hlasu" minValue="0.5" maxValue="2.0" step="0.1" class="ml-2" />
                 </StackLayout>
 
                 <!-- Rychlost \u0159e\u010di -->
                 <StackLayout>
                     <Label text="Rychlost \u0159e\u010di: {{ ttsRate | number:'1.1' }}" class="text-sm font-medium text-theme-secondary" />
-                    <Slider value="{{ ttsRate }}" minValue="0.5" maxValue="2.0" step="0.1" class="ml-2" />
+                    <Slider value="{{ ttsRate }}" accessibilityLabel="Rychlost řeči" minValue="0.5" maxValue="2.0" step="0.1" class="ml-2" />
                 </StackLayout>
 
                 <!-- Test TTS -->
-                <Button text="Testovat TTS" tap="{{ testTTS }}" 
-                        class="bg-green-500 text-white font-bold p-2 rounded-lg transition-normal" />
+                <Button text="Testovat TTS" tap="{{ testTTS }}" accessibilityLabel="Otestovat hlasovou zpětnou vazbu" 
+                        class="bg-green-500 text-white font-bold p-2 rounded-lg transition-normal btn-press" />
             </StackLayout>
 
             <!-- Tmav\u00fd re\u017eim -->

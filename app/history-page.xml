@@ -13,7 +13,7 @@
                 <!-- Vyhled\u00e1v\u00e1n\u00ed -->
                 <StackLayout>
                     <Label text="Hledat" class="text-sm font-medium text-theme-secondary" />
-                    <TextField text="{{ searchText }}" hint="Zadejte hledan\u00fd text" 
+                    <TextField text="{{ searchText }}" accessibilityLabel="Pole pro hledání v historii" hint="Zadejte hledan\u00fd text" 
                                class="p-2 bg-white rounded border-theme border-width-1 text-gray-800" />
                 </StackLayout>
 
@@ -61,24 +61,24 @@
 
                 <!-- Filter buttons -->
                 <StackLayout orientation="horizontal" class="space-x-2">
-                    <Button text="Pou\u017e\u00edt filtry" tap="{{ applyFilters }}" 
-                            class="flex-1 bg-blue-500 text-white font-bold p-2 rounded transition-normal" />
-                    <Button text="Vy\u010distit filtry" tap="{{ clearFilters }}" 
-                            class="flex-1 bg-gray-500 text-white font-bold p-2 rounded transition-normal" />
+                    <Button text="Pou\u017e\u00edt filtry" tap="{{ applyFilters }}" accessibilityLabel="Použít filtry" 
+                            class="flex-1 bg-blue-500 text-white font-bold p-2 rounded transition-normal btn-press" />
+                    <Button text="Vy\u010distit filtry" tap="{{ clearFilters }}" accessibilityLabel="Vyčistit filtry" 
+                            class="flex-1 bg-gray-500 text-white font-bold p-2 rounded transition-normal btn-press" />
                 </StackLayout>
             </StackLayout>
 
             <!-- Export buttons -->
             <StackLayout orientation="horizontal" class="space-x-2">
-                <Button text="Exportovat CSV" tap="{{ exportHistory }}" 
-                        class="flex-1 bg-green-500 text-white font-bold p-2 rounded transition-normal" />
-                <Button text="Exportovat JSON" tap="{{ exportHistoryJSON }}" 
-                        class="flex-1 bg-green-600 text-white font-bold p-2 rounded transition-normal" />
+                <Button text="Exportovat CSV" tap="{{ exportHistory }}" accessibilityLabel="Exportovat historii jako CSV" 
+                        class="flex-1 bg-green-500 text-white font-bold p-2 rounded transition-normal btn-press" />
+                <Button text="Exportovat JSON" tap="{{ exportHistoryJSON }}" accessibilityLabel="Exportovat historii jako JSON" 
+                        class="flex-1 bg-green-600 text-white font-bold p-2 rounded transition-normal btn-press" />
             </StackLayout>
 
             <!-- Clear all button -->
-            <Button text="Smazat celou historii" tap="{{ clearAllHistory }}" 
-                    class="bg-red-500 text-white font-bold p-2 rounded transition-normal" />
+            <Button text="Smazat celou historii" tap="{{ clearAllHistory }}" accessibilityLabel="Smazat celou historii" 
+                    class="bg-red-500 text-white font-bold p-2 rounded transition-normal btn-press" />
 
             <!-- Seznam historie -->
             <Label text="Z\u00e1znamy ({{ filteredHistory.length }})" class="text-lg font-bold text-theme-primary mt-4" />
@@ -111,8 +111,8 @@
                         </StackLayout>
 
                         <!-- Delete button -->
-                        <Button col="2" row="0" rowspan="4" text="\u00d7" tap="{{ $parent.deleteEntry }}"
-                                class="bg-red-100 text-red-500 text-lg font-bold rounded-full w-8 h-8 transition-normal" />
+                        <Button col="2" row="0" rowspan="4" text="\u00d7" tap="{{ $parent.deleteEntry }}" accessibilityLabel="Smazat tento záznam"
+                                class="bg-red-100 text-red-500 text-lg font-bold rounded-full w-8 h-8 transition-normal btn-press" />
                     </GridLayout>
                 </ListView.itemTemplate>
                 <ListView.emptyTemplate>

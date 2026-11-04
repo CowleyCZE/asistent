@@ -143,3 +143,156 @@ Pokud chcete přispět do projektu nebo si aplikaci sami sestavit, postupujte po
 [Edit in StackBlitz ⚡️][def]
 
 [def]: https://stackblitz.com/~/github.com/TestujuJa/CZE-asistent
+
+
+---
+
+## 📦 Instalace
+
+### Předpoklady
+
+- **Node.js** 18+ a npm
+- **NativeScript CLI 8.3+**: `npm install -g nativescript@8.3.0`
+- **Android SDK** (API 33) + Android Studio, nebo jen command-line tools
+- Zařízení/emulátor s Androidem (API 26+), povolené ladění USB (`adb devices`)
+
+### Kroky instalace
+
+```bash
+# 1. Klonovat repozitář
+git clone https://github.com/CowleyCZE/asistent.git
+cd asistent
+
+# 2. Nainstalovat závislosti (spustí i setup-nativescript.js)
+npm install
+
+# 3. Zkontrolovat prostředí
+ns doctor android
+
+# 4. Spustit na připojeném zařízení / emulátoru
+ns run android
+```
+
+> 💡 **API klíče:** Webhook klíče a další tajemství se konfigurují přes GitHub Secrets v CI (viz `.github/SECRETS.md`). Do repozitře nikdy nevkládejte reálné klíče.
+
+## 🚀 Příklady použití
+
+### Definice hlasové akce
+
+V nastavení aplikace (Nastavení → Akce) vytvořte akci:
+
+| Pole | Příklad |
+| --- | --- |
+| Fráze | `rozsvit svetlo v obyvaku` |
+| Název | `Světlo obývák` |
+| Typ | `webhook` |
+| URL | `https://home.example.com/api/light?room=living` |
+
+Stačí říct aktivační frázi (např. *"Asistente"*) a poté příkaz. Asistent příkaz matchne, zavolá webhook a potvrdí hlasem i notifikací.
+
+### Příklad: Tasker úloha
+
+| Pole | Příklad |
+| --- | --- |
+| Fráze | `zapni televizi` |
+| Typ | `tasker` |
+| Název úlohy | `TV_ON` |
+
+Požadavek na Tasker musí být na zařízení nainstalovaný a povolený *External Access*.
+
+### Offline režim
+
+Bez připojení se příkazy nevyhazují – ukládají se do fronty (max. 100, priorizované, max. 3 pokusy na příkaz). Jakmile se připojení obnoví, fronta se automaticky zpracuje a dostanete notifikaci s výsledkem.
+
+## 🏗️ Přehled architektury
+
+```text
+main-page (lazy view-model)
+   └─ MainViewModel ── ServiceLocator ──┐
+                                         │  DIContainer (singletony)
+        ┌────────────────┬───────────────┼──────────────────┐
+        ▼                ▼               ▼                  ▼
+ SpeechRecognition  AssistantService  Connectivity     FeedbackService
+        │           └─ CommandProcessor (webhook / tasker akce)
+        │           └─ OfflineService (prioritní fronta, retry)
+        └─ history / statistics / settings / cache / theme / notification / tts / translator / tasker
+```
+
+### Použité návrhové vzory
+
+- **Dependency Injection + Service Locator** – služby se vytvářejí lazy přes `DIContainer` (`service-locator.ts), instance jsou singletony; `ServiceLocator.override()` umožňuje v testech dosadit mocky.
+- **Constructor Injection** – `AssistantService` přijímá závislosti přes `AssistantServiceDeps`, takže je testovatelný bez Androidu.
+- **Singleton** – `serviceLocator`, `serviceRegistry`, `themeService`.
+- **Observer (Observable)** – události rozpoznávání řeči (`speechResult`, `wakeWordDetected`) a konektivity (`connectionRestored`).
+- **Strategy** – `CommandProcessor` rozhoduje mezi webhookem a Taskerem podle typu akce.
+- **Registry + IDisposable** – `serviceRegistry` sbírá služby s metodou `dispose()` a centralizovaně je uvolňuje při ukončení aplikace.
+- **Cache-Aside** – `CacheService.withCache()` (TTL cleanup + size-based evikce).
+- **Lazy loading** – view-modely stránek i služby se vytvářejí až při prvním použití (`LazyNavigator`).
+
+## 🔧 Build proces
+
+```bash
+# Vývojový build + deploy na zařízení
+ns run android
+
+# Produkční APK (release konfigurace)
+ns build android --env.production
+# výstup: platforms/android/app/build/outputs/apk/...
+
+# Unit testy
+npm test
+
+# Unit testy s coverage reportem (prahy v jest.config.js)
+npm run test:coverage
+
+# E2E testy (Appium + WebdriverIO; vyžaduje APK a spuštěný emulátor/zařízení)
+npm run e2e:driver            # instalace UiAutomator2 driveru
+APK_PATH=./cesta/k/app.apk npm run e2e
+```
+
+CI (GitHub Actions, `.github/workflows/build.yml`) na každý push do `main`:
+1. `npm install`
+2. **Unit testy s coverage** (`npm test -- --coverage`) – build selže pod prahem coverage
+3. Build Android APK
+4. Upload APK artefaktu (7 dní)
+
+## 📝 Coding guidelines
+
+- **TypeScript**, NativeScript 8.3, Tailwind CSS pro styly.
+- **Žádné magic strings** – klíče úložiště a barvy patří do `app/utils/constants.ts` (`StorageKeys`, `Colors`, `Limits`).
+- **DI před statickými importy** – služby získávejte přes `serviceLocator.get(ServiceTokens.X)`, rozhraní (`service-interfaces.ts`) před konkrétními třídami.
+- **Validace a error handling** – vstupy sanitizujte přes `Validators` (`app/utils/validation.ts`), síťová volání přes `fetchWithTimeout` + `retryWithBackoff`, chyby logujte přes `ErrorHandler`/`LoggerService`.
+- **Naming**: třídy `PascalCase` (`OfflineService`), metody a proměnné `camelCase`, konstanty v `constants.ts` `PascalCase`, soubory `kebab-case.service.ts`.
+- **JSDoc** pro veřejné metody služeb (krátce: co, parametry, návratová hodnota).
+- **Testy**: unit testy v `tests/services/*.spec.ts` (Jest + ts-jest, mocky v `tests/mocks/`), E2E v `tests/e2e/`. Nová služba = nový spec.
+
+## 🛠️ Troubleshooting
+
+| Problém | Řešení |
+| --- | --- |
+| `ns doctor android` hlásí chyby | Zkontrolujte ANDROID_HOME / ANDROID_SDK_ROOT a nainstalované platformy API 33. |
+| Aplikace neslyší mikrofon | Povolte oprávnění MICROPHONE (RECORD_AUDIO) v nastavení Androidu; aplikace si ho žádá při startu. |
+| Wake word nereaguje | Ověřte, že je v nastavení správná aktivační fráze a běží detekce (status na hlavní obrazovce). |
+| Webhooky nechodí | Ověřte URL (musí být HTTPS), dostupnost endpointu a API klíč; offline příkazy najdete ve frontě (indikátor na hlavní obrazovce). |
+| Tasker úlohy se nespouštějí | Tasker musí být nainstalovaný a povolený *External Access*; aplikace to detekuje přes `isTaskerInstalled()`. |
+| Notifikace se nezobrazují | Zkontrolujte, že notifikace jsou povolené v nastavení aplikace i systému Android. |
+| Offline fronta se nezpracuje | Přejde automaticky při obnově připojení (do 30 s), nebo ručně tlačítkem „Zpracovat" na hlavní obrazovce. |
+| Testy padají na mock @nativescript/core | Mocky jsou v `tests/mocks/nativescript-core.mock.ts` – nové exporty přidejte tam i do `tests/setup.ts`. |
+
+## ❓ FAQ
+
+**Musí být zařízení rootnuté?** Ne, aplikace používá jen standardní Android API a oprávnění (mikrofon, internet, notifikace).
+
+**Funguje bez internetu?** Ano – příkazy se ukládají do offline fronty a automaticky zpracují po obnově připojení.
+
+**Podporuje iOS?** Zatím ne – viz P4 (iOS podpora) v `opravy-todo.md`.
+
+**Kde se ukládá historie příkazů?** V application storage pod klíči z `StorageKeys` (`command_history_v1`…), posledních 100 položek.
+
+**Jak přidám novou hlasovou akci?** V nastavení aplikace (typ webhook nebo tasker), nebo viz „Příklady použití" výše.
+
+**Jak přispět?** Dodržte coding guidelines, přidejte unit testy a v PR nechte projít CI (testy + coverage + build).
+
+---
+
+*Tato dokumentace odpovídá stavu repo z 4. 11. 2026. Aktuální seznam úkolů najdete v `opravy-todo.md`.*

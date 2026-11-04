@@ -112,17 +112,17 @@
 - [ ] Implementovat custom téma
 
 ### Dokumentace
-- [ ] Přidat installation guide do README
-- [ ] Přidat usage examples do README
-- [ ] Přidat troubleshooting sekci do README
-- [ ] Přidat FAQ do README
+- [x] Přidat installation guide do README
+- [x] Přidat usage examples do README
+- [x] Přidat troubleshooting sekci do README
+- [x] Přidat FAQ do README
 - [ ] Přidat screenshots do README
 - [ ] Generovat API docs z JSDoc
-- [ ] Přidat příklady použití do dokumentace
-- [ ] Přidat architecture overview
-- [ ] Dokumentovat design patterns
-- [ ] Přidat coding guidelines
-- [ ] Dokumentovat build proces
+- [x] Přidat příklady použití do dokumentace
+- [x] Přidat architecture overview
+- [x] Dokumentovat design patterns
+- [x] Přidat coding guidelines
+- [x] Dokumentovat build proces
 
 ---
 

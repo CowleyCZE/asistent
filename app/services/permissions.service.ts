@@ -1,9 +1,11 @@
 declare var android: any;
 import { Application, AndroidApplication } from '@nativescript/core';
 
+/** Správa oprávnění Android (mikrofon). */
 export class PermissionsService {
     private static RECORD_AUDIO_PERMISSION = android.Manifest.permission.RECORD_AUDIO;
 
+    /** Zjistí, zda je uděleno oprávnění k mikrofonu. */
     public async checkMicrophonePermission(): Promise<boolean> {
         if (Application.android) {
             const hasPermission = await this.checkPermission(PermissionsService.RECORD_AUDIO_PERMISSION);
@@ -12,6 +14,8 @@ export class PermissionsService {
         return false;
     }
 
+    /** Vyžádá oprávnění k mikrofonu (systémový dialog).
+     * @returns true, pokud bylo oprávnění uděleno. */
     public async requestMicrophonePermission(): Promise<boolean> {
         if (Application.android) {
             const granted = await this.requestPermission(PermissionsService.RECORD_AUDIO_PERMISSION);

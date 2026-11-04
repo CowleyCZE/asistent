@@ -204,6 +204,7 @@ export class CacheService {
         return this.get<WebhookCache>(`webhook_${url}`);
     }
 
+    /** Uloží odpověď webhooku do cache s volitelným TTL. */
     public setWebhookCache(url: string, response: any, ttl: number = this.DEFAULT_TTL): void {
         const cache: WebhookCache = {
             url,
@@ -214,6 +215,7 @@ export class CacheService {
         this.set(`webhook_${url}`, cache, ttl);
     }
 
+    /** Smaže cache konkrétního webhooku, nebo všechny webhookové cache. */
     public clearWebhookCache(url?: string): void {
         if (url) {
             this.remove(`webhook_${url}`);

@@ -34,6 +34,7 @@ export interface Statistics {
     leastSuccessfulActions: ActionUsage[];
 }
 
+/** Agregace statistik příkazů z historie (úspěšnost, trendy, použití akcí). */
 export class StatisticsService {
     private historyService: HistoryService;
     private settingsService: SettingsService;
@@ -43,6 +44,7 @@ export class StatisticsService {
         this.settingsService = new SettingsService();
     }
 
+    /** Vypočítá kompletní statistiky z historie příkazů. */
     public getStatistics(): Statistics {
         const history = this.historyService.getHistory();
         const allActions = this.settingsService.getActions();
@@ -166,6 +168,7 @@ export class StatisticsService {
         return date.toISOString().split('T')[0];
     }
 
+    /** Naformátuje ISO datum pro zobrazení (cs-CZ). */
     public formatDateForDisplay(dateStr: string): string {
         const date = new Date(dateStr);
         return date.toLocaleDateString('cs-CZ', {
@@ -175,6 +178,7 @@ export class StatisticsService {
         });
     }
 
+    /** Vrací Tailwind CSS třídu barvy podle úspěšnosti. */
     public getSuccessRateColor(rate: number): string {
         if (rate >= 90) return Colors.Success;
         if (rate >= 70) return Colors.SuccessHigh;
@@ -183,6 +187,7 @@ export class StatisticsService {
         return Colors.Error;
     }
 
+    /** Určí trend mezi dvěma hodnotami ('up' | 'down' | 'same'). */
     public getTrend(previous: number, current: number): 'up' | 'down' | 'same' {
         if (current > previous) return 'up';
         if (current < previous) return 'down';

@@ -12,6 +12,7 @@ export interface TTSConfig {
     volume: number; // 0.0 - 1.0
 }
 
+/** Hlasová zpětná vazba přes Android TTS engine. */
 export class TextToSpeechService {
     private settingsService: SettingsService;
     private ttsEngine: any = null;
@@ -70,6 +71,7 @@ export class TextToSpeechService {
         }
     }
 
+    /** Vrací aktuální konfiguraci TTS. */
     public getConfig(): TTSConfig {
         const settingsConfig = this.settingsService.getTTSConfig();
         return {
@@ -81,6 +83,7 @@ export class TextToSpeechService {
         };
     }
 
+    /** Uloží část konfigurace TTS a znovu nakonfiguruje engine. */
     public saveConfig(config: Partial<TTSConfig>) {
         if (config.enabled !== undefined) {
             this.settingsService.updateTTSEnabled(config.enabled);
@@ -101,30 +104,38 @@ export class TextToSpeechService {
         }
     }
 
+    /** Zjistí, zda je TTS povoleno. */
     public isEnabled(): boolean {
         return this.settingsService.getTTSConfig().enabled;
     }
 
+    /** Povolí nebo zakáže TTS. */
     public setEnabled(enabled: boolean) {
         this.settingsService.updateTTSEnabled(enabled);
     }
 
+    /** Nastaví jazyk TTS. */
     public setLanguage(language: string) {
         this.settingsService.updateTTSLanguage(language);
     }
 
+    /** Nastaví výšku hlasu TTS (0.5–2.0). */
     public setPitch(pitch: number) {
         this.settingsService.updateTTSPitch(Math.max(0.5, Math.min(2.0, pitch)));
     }
 
+    /** Nastaví rychlost řeči TTS (0.5–2.0). */
     public setRate(rate: number) {
         this.settingsService.updateTTSRate(Math.max(0.5, Math.min(2.0, rate)));
     }
 
+    /** Nastaví hlasitost TTS (0.0–1.0). */
     public setVolume(volume: number) {
         this.saveConfig({ volume: Math.max(0.0, Math.min(1.0, volume)) });
     }
 
+    /** Přečte text nahlas.
+     * @returns true, pokud bylo čtení úspěšně zahájeno. */
     public async speak(text: string): Promise<boolean> {
         if (!this.getConfig().enabled || !this.isInitialized || !this.ttsEngine) {
             return false;
@@ -158,6 +169,7 @@ export class TextToSpeechService {
         });
     }
 
+    /** Přečte text s volitelnou dočasnou výškou/rychlostí hlasu. */
     public async speakWithConfig(text: string, pitch?: number, rate?: number): Promise<boolean> {
         if (pitch !== undefined) {
             this.setPitch(pitch);
@@ -168,6 +180,7 @@ export class TextToSpeechService {
         return this.speak(text);
     }
 
+    /** Zastaví aktuální čtení. */
     public stop() {
         if (this.ttsEngine && this.isInitialized) {
             try {
@@ -178,6 +191,7 @@ export class TextToSpeechService {
         }
     }
 
+    /** Ukončí TTS engine. */
     public shutdown() {
         if (this.ttsEngine && this.isInitialized) {
             try {
@@ -189,11 +203,13 @@ export class TextToSpeechService {
         }
     }
 
+    /** Kompletní úklid – zastaví čtení a ukončí engine. */
     public dispose(): void {
         this.stop();
         this.shutdown();
     }
 
+    /** Vrací seznam jazyků dostupných v TTS enginu. */
     public getAvailableLanguages(): string[] {
         if (!this.ttsEngine || !this.isInitialized) {
             return ['cs-CZ', 'en-US', 'sk-SK', 'de-DE', 'fr-FR'];
@@ -216,6 +232,7 @@ export class TextToSpeechService {
         }
     }
 
+    /** Zjistí, zda je daný jazyk k dispozici v TTS enginu. */
     public isLanguageAvailable(language: string): boolean {
         const available = this.getAvailableLanguages();
         return available.includes(language) || available.includes(language.split('-')[0]);

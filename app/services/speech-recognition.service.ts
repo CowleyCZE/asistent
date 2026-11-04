@@ -5,6 +5,7 @@ declare var java: any;
 import { SettingsService } from './settings.service';
 import { serviceRegistry } from './service-registry';
 
+/** Rozpoznávání řeči (Android SpeechRecognizer) včetně wake word detekce. */
 export class SpeechRecognitionService extends Observable {
     private speechRecognizer: any;
     private isListening: boolean = false;
@@ -91,6 +92,7 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
+    /** Spustí kontinuální poslech pro detekci wake word frází. */
     public startWakeWordDetection() {
         if (Application.android && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
@@ -105,6 +107,7 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
+    /** Spustí jednorázové rozpoznávání řeči (cs-CZ). */
     public startListening() {
         if (Application.android && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
@@ -118,6 +121,7 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
+    /** Zastaví aktuální poslech. */
     public stopListening() {
         if (this.isListening) {
             this.speechRecognizer.stopListening();
@@ -126,12 +130,14 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
+    /** Uvolní prostředky SpeechRecognizeru. */
     public destroy() {
         if (this.speechRecognizer) {
             this.speechRecognizer.destroy();
         }
     }
 
+    /** Kompletní úklid – zastaví poslech a zničí recognizer. */
     public dispose(): void {
         this.stopListening();
         this.destroy();

@@ -12,6 +12,7 @@ class ServiceRegistry {
 
     private constructor() {}
 
+    /** Vrací singleton instanci registru. */
     public static getInstance(): ServiceRegistry {
         if (!ServiceRegistry.instance) {
             ServiceRegistry.instance = new ServiceRegistry();

@@ -26,6 +26,7 @@ export interface NotificationSettings {
     previewText: boolean;
 }
 
+/** Správa notifikací: zobrazování, fronta, historie a nastavení. */
 export class NotificationService {
     private readonly NOTIFICATIONS_KEY = StorageKeys.Notifications;
     private readonly NOTIFICATION_SETTINGS_KEY = StorageKeys.NotificationSettings;
@@ -68,38 +69,48 @@ export class NotificationService {
         ApplicationSettings.setString(this.NOTIFICATION_SETTINGS_KEY, JSON.stringify(newSettings));
     }
 
+    /** Zjistí, zda jsou notifikace povoleny. */
     public isEnabled(): boolean {
         return this.loadSettings().enabled;
     }
 
+    /** Povolí nebo zakáže notifikace. */
     public enableNotifications(enabled: boolean) {
         this.saveSettings({ enabled });
     }
 
+    /** Povolí nebo zakáže zvuk notifikací. */
     public enableSound(enabled: boolean) {
         this.saveSettings({ soundEnabled: enabled });
     }
 
+    /** Povolí nebo zakáže vibrace při notifikacích. */
     public enableVibration(enabled: boolean) {
         this.saveSettings({ vibrationEnabled: enabled });
     }
 
+    /** Povolí nebo zakáže notifikace o úspěšných akcích. */
     public enableSuccessNotifications(enabled: boolean) {
         this.saveSettings({ successNotifications: enabled });
     }
 
+    /** Povolí nebo zakáže notifikace o chybách. */
     public enableErrorNotifications(enabled: boolean) {
         this.saveSettings({ errorNotifications: enabled });
     }
 
+    /** Povolí nebo zakáže náhled textu notifikace. */
     public enablePreviewText(enabled: boolean) {
         this.saveSettings({ previewText: enabled });
     }
 
+    /** Vrací aktuální nastavení notifikací. */
     public getSettings(): NotificationSettings {
         return this.loadSettings();
     }
 
+    /** Zobrazí notifikaci; při obsazených slotech ji zařadí do fronty.
+     * @returns Vytvořená notifikace, nebo null, pokud jsou notifikace zakázány. */
     public show(notification: Omit<Notification, 'id' | 'timestamp'>): Notification | null {
         const settings = this.loadSettings();
         
@@ -132,6 +143,7 @@ export class NotificationService {
         return fullNotification;
     }
 
+    /** Zobrazí notifikaci typu 'success' (respektuje nastavení successNotifications). */
     public showSuccess(title: string, message: string, duration?: number): Notification | null {
         const settings = this.loadSettings();
         if (!settings.successNotifications) {
@@ -140,6 +152,7 @@ export class NotificationService {
         return this.show({ title, message, type: 'success', duration });
     }
 
+    /** Zobrazí notifikaci typu 'error' (respektuje nastavení errorNotifications). */
     public showError(title: string, message: string, duration?: number): Notification | null {
         const settings = this.loadSettings();
         if (!settings.errorNotifications) {
@@ -148,14 +161,18 @@ export class NotificationService {
         return this.show({ title, message, type: 'error', duration });
     }
 
+    /** Zobrazí notifikaci typu 'warning'. */
     public showWarning(title: string, message: string, duration?: number): Notification | null {
         return this.show({ title, message, type: 'warning', duration });
     }
 
+    /** Zobrazí notifikaci typu 'info'. */
     public showInfo(title: string, message: string, duration?: number): Notification | null {
         return this.show({ title, message, type: 'info', duration });
     }
 
+    /** Skryje notifikaci podle id a případně zobrazí další z fronty.
+     * @returns true, pokud byla notifikace nalezena a skryta. */
     public dismiss(id: string): boolean {
         const index = this.activeNotifications.findIndex(n => n.id === id);
         if (index !== -1) {
@@ -174,23 +191,28 @@ export class NotificationService {
         return false;
     }
 
+    /** Skryje všechny aktivní i frontované notifikace. */
     public dismissAll(): void {
         this.activeNotifications = [];
         this.notificationQueue = [];
     }
 
+    /** Vrací kopii seznamu aktivních notifikací. */
     public getActiveNotifications(): Notification[] {
         return [...this.activeNotifications];
     }
 
+    /** Vrací kopii fronty čekajících notifikací. */
     public getQueuedNotifications(): Notification[] {
         return [...this.notificationQueue];
     }
 
+    /** Zjistí, zda existují aktivní nebo čekající notifikace. */
     public hasNotifications(): boolean {
         return this.activeNotifications.length > 0 || this.notificationQueue.length > 0;
     }
 
+    /** Vrací historii notifikací (posledních max. 10). */
     public getHistory(): Notification[] {
         const historyJson = ApplicationSettings.getString(this.NOTIFICATIONS_KEY);
         if (historyJson) {
@@ -204,6 +226,7 @@ export class NotificationService {
         return [];
     }
 
+    /** Smaže historii notifikací. */
     public clearHistory(): void {
         ApplicationSettings.remove(this.NOTIFICATIONS_KEY);
     }
@@ -333,6 +356,7 @@ export class NotificationService {
         return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     }
 
+    /** Vrací Tailwind CSS třídu barvy podle typu notifikace. */
     public getNotificationColor(type: NotificationType): string {
         switch (type) {
             case 'success':
@@ -346,6 +370,7 @@ export class NotificationService {
         }
     }
 
+    /** Vrací ikonový znak podle typu notifikace. */
     public getNotificationIcon(type: NotificationType): string {
         switch (type) {
             case 'success':

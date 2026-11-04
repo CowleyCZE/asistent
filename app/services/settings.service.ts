@@ -30,6 +30,7 @@ export interface AppSettings {
     webhookAuth?: WebhookAuth;
 }
 
+/** Správa nastavení aplikace, akcí a webhook autentizace (perzistence v ApplicationSettings). */
 export class SettingsService {
     private readonly SETTINGS_KEY = StorageKeys.Settings; // Změna klíče pro migraci
     private readonly DEFAULT_SETTINGS: AppSettings = {
@@ -84,6 +85,7 @@ export class SettingsService {
         }
     }
 
+    /** Vrací nastavení aplikace (s doplněním chybějících výchozích hodnot). */
     public getSettings(): AppSettings {
         const settings = ApplicationSettings.getString(this.SETTINGS_KEY);
         if (settings) {
@@ -113,6 +115,7 @@ export class SettingsService {
         ApplicationSettings.setString(this.SETTINGS_KEY, JSON.stringify(settings));
     }
 
+    /** Aktualizuje wake word fráze (s validací a sanitizací). */
     public updateWakePhrases(phrases: string[]) {
         const settings = this.getSettings();
         settings.wakePhrases = (phrases ?? [])
@@ -121,18 +124,21 @@ export class SettingsService {
         this.saveSettings(settings);
     }
 
+    /** Zapne nebo vypne hlasovou zpětnou vazbu. */
     public updateFeedback(enabled: boolean) {
         const settings = this.getSettings();
         settings.feedbackEnabled = enabled;
         this.saveSettings(settings);
     }
 
+    /** Aktualizuje citlivost rozpoznávání. */
     public updateSensitivity(value: number) {
         const settings = this.getSettings();
         settings.sensitivity = value;
         this.saveSettings(settings);
     }
 
+    /** Vrací seznam všech akcí. */
     public getActions(): Action[] {
         return this.getSettings()?.actions ?? [];
     }
@@ -171,6 +177,7 @@ export class SettingsService {
         return result;
     }
 
+    /** Smaže akci podle indexu. */
     public deleteAction(index: number) {
         const settings = this.getSettings();
         if (index >= 0 && index < settings.actions.length) {
@@ -180,30 +187,35 @@ export class SettingsService {
     }
 
     // TTS Settings
+    /** Zapne nebo vypne TTS. */
     public updateTTSEnabled(enabled: boolean) {
         const settings = this.getSettings();
         settings.ttsEnabled = enabled;
         this.saveSettings(settings);
     }
 
+    /** Nastaví jazyk TTS. */
     public updateTTSLanguage(language: string) {
         const settings = this.getSettings();
         settings.ttsLanguage = language;
         this.saveSettings(settings);
     }
 
+    /** Nastaví výšku hlasu TTS (0.5–2.0). */
     public updateTTSPitch(pitch: number) {
         const settings = this.getSettings();
         settings.ttsPitch = Math.max(0.5, Math.min(2.0, pitch));
         this.saveSettings(settings);
     }
 
+    /** Nastaví rychlost řeči TTS (0.5–2.0). */
     public updateTTSRate(rate: number) {
         const settings = this.getSettings();
         settings.ttsRate = Math.max(0.5, Math.min(2.0, rate));
         this.saveSettings(settings);
     }
 
+    /** Vrací konfiguraci TTS (enabled, language, pitch, rate). */
     public getTTSConfig() {
         const settings = this.getSettings();
         return {
@@ -215,29 +227,34 @@ export class SettingsService {
     }
 
     // Webhook Auth Settings
+    /** Vrací autentizaci webhooků (API klíč, HMAC secret). */
     public getWebhookAuth(): WebhookAuth {
         const settings = this.getSettings();
         return settings?.webhookAuth ?? { apiKey: '', hmacSecret: '', useHmac: false };
     }
 
+    /** Aktualizuje celou autentizaci webhooků. */
     public updateWebhookAuth(auth: WebhookAuth) {
         const settings = this.getSettings();
         settings.webhookAuth = auth;
         this.saveSettings(settings);
     }
 
+    /** Aktualizuje API klíč webhooků (s sanitizací). */
     public updateWebhookApiKey(apiKey: string) {
         const auth = this.getWebhookAuth();
         auth.apiKey = Validators.sanitizeText(apiKey, 256);
         this.updateWebhookAuth(auth);
     }
 
+    /** Aktualizuje HMAC secret webhooků (s sanitizací). */
     public updateWebhookHmacSecret(secret: string) {
         const auth = this.getWebhookAuth();
         auth.hmacSecret = Validators.sanitizeText(secret, 256);
         this.updateWebhookAuth(auth);
     }
 
+    /** Zapne nebo vypne HMAC podpis webhooků. */
     public updateWebhookUseHmac(useHmac: boolean) {
         const auth = this.getWebhookAuth();
         auth.useHmac = useHmac;

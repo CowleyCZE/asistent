@@ -10,6 +10,7 @@ export interface ThemeSettings {
     useAnimations: boolean;
 }
 
+/** Správa motivu aplikace (světlý/tmavý/systém) a CSS proměnných. */
 export class ThemeService {
     private readonly THEME_KEY = StorageKeys.ThemeSettings;
     
@@ -34,6 +35,7 @@ export class ThemeService {
         }
     }
 
+    /** Vrací nastavení motivu (sloučené s výchozími hodnotami). */
     public getSettings(): ThemeSettings {
         const saved = ApplicationSettings.getString(this.THEME_KEY);
         if (saved) {
@@ -47,6 +49,7 @@ export class ThemeService {
         return this.DEFAULT_SETTINGS;
     }
 
+    /** Uloží část nastavení motivu a ihned aplikuje motiv. */
     public saveSettings(settings: Partial<ThemeSettings>) {
         const current = this.getSettings();
         const newSettings = { ...current, ...settings };
@@ -54,26 +57,32 @@ export class ThemeService {
         this.applyTheme(newSettings.mode);
     }
 
+    /** Nastaví režim motivu ('light' | 'dark' | 'system'). */
     public setMode(mode: ThemeMode) {
         this.saveSettings({ mode });
     }
 
+    /** Nastaví primární barvu motivu. */
     public setPrimaryColor(color: string) {
         this.saveSettings({ primaryColor: color });
     }
 
+    /** Nastaví akcentovou barvu motivu. */
     public setAccentColor(color: string) {
         this.saveSettings({ accentColor: color });
     }
 
+    /** Zapne nebo vypne animace motivu. */
     public setAnimations(enabled: boolean) {
         this.saveSettings({ useAnimations: enabled });
     }
 
+    /** Vrací aktuální režim motivu. */
     public getMode(): ThemeMode {
         return this.getSettings().mode;
     }
 
+    /** Zjistí, zda je aktivní tmavý režim (včetně systémové preference). */
     public isDarkMode(): boolean {
         const settings = this.getSettings();
         if (settings.mode === 'dark') return true;
@@ -82,28 +91,34 @@ export class ThemeService {
         return this.isSystemDarkMode();
     }
 
+    /** Zjistí, zda je aktivní světlý režim. */
     public isLightMode(): boolean {
         return !this.isDarkMode();
     }
 
+    /** Zjistí, zda jsou animace motivu povoleny. */
     public areAnimationsEnabled(): boolean {
         return this.getSettings().useAnimations;
     }
 
+    /** Vrací primární barvu motivu. */
     public getPrimaryColor(): string {
         return this.getSettings().primaryColor;
     }
 
+    /** Vrací akcentovou barvu motivu. */
     public getAccentColor(): string {
         return this.getSettings().accentColor;
     }
 
+    /** Přepne mezi světlým a tmavým režimem. */
     public toggleTheme() {
         const currentMode = this.getMode();
         const newMode = currentMode === 'light' ? 'dark' : 'light';
         this.setMode(newMode);
     }
 
+    /** Aplikuje motiv na CSS proměnné dokumentu. */
     public applyTheme(mode?: ThemeMode) {
         const effectiveMode = mode || this.getMode();
         const isDark = effectiveMode === 'dark' || (effectiveMode === 'system' && this.isSystemDarkMode());
@@ -133,6 +148,7 @@ export class ThemeService {
         }
     }
 
+    /** Zjistí tmavý režim systému (Android, fallback podle denní doby). */
     public isSystemDarkMode(): boolean {
         try {
             // Android dark mode detection
@@ -154,22 +170,27 @@ export class ThemeService {
         }
     }
 
+    /** Vrací CSS třídu aktuálního motivu ('dark'/'light'). */
     public getThemeClass(): string {
         return this.isDarkMode() ? 'dark' : 'light';
     }
 
+    /** Vrací CSS třídu pozadí podle motivu. */
     public getBackgroundClass(): string {
         return this.isDarkMode() ? 'bg-gray-900' : 'bg-gray-100';
     }
 
+    /** Vrací CSS třídu textu podle motivu. */
     public getTextClass(): string {
         return this.isDarkMode() ? 'text-white' : 'text-gray-800';
     }
 
+    /** Vrací CSS třídu karty podle motivu. */
     public getCardClass(): string {
         return this.isDarkMode() ? 'bg-gray-800' : 'bg-white';
     }
 
+    /** Vrací CSS třídu okraje podle motivu. */
     public getBorderClass(): string {
         return this.isDarkMode() ? 'border-gray-600' : 'border-gray-200';
     }

@@ -23,10 +23,12 @@ export interface HistoryFilter {
     searchText?: string;
 }
 
+/** Historie vykonaných příkazů s filtrací a exportem (CSV/JSON). */
 export class HistoryService {
     private readonly HISTORY_KEY = StorageKeys.CommandHistory;
     private readonly MAX_HISTORY_ITEMS = 100;
 
+    /** Přidá záznam o vykonaném příkazu do historie (max. 100 záznamů). */
     public addCommand(
         command: string,
         actionName: string,
@@ -54,6 +56,7 @@ export class HistoryService {
         this.saveHistory(history);
     }
 
+    /** Vrací celou historii příkazů (od nejnovějšího). */
     public getHistory(): CommandHistory[] {
         const historyJson = ApplicationSettings.getString(this.HISTORY_KEY);
         if (historyJson) {
@@ -71,6 +74,7 @@ export class HistoryService {
         return [];
     }
 
+    /** Vrací historii filtrovanou podle stavu, typu, data a hledaného textu. */
     public getFilteredHistory(filter: HistoryFilter): CommandHistory[] {
         const history = this.getHistory();
 
@@ -99,6 +103,8 @@ export class HistoryService {
         });
     }
 
+    /** Smaže záznam z historie podle id.
+     * @returns true, pokud byl záznam nalezen a smazán. */
     public deleteEntry(id: string): boolean {
         const history = this.getHistory();
         const index = history.findIndex(entry => entry.id === id);
@@ -110,10 +116,12 @@ export class HistoryService {
         return false;
     }
 
+    /** Smaže celou historii příkazů. */
     public clearHistory(): void {
         ApplicationSettings.remove(this.HISTORY_KEY);
     }
 
+    /** Exportuje historii do CSV (včetně hlavičky). */
     public exportHistory(): string {
         const history = this.getHistory();
         const csvHeader = 'ID,Čas,Příkaz,Název akce,Typ akce,Stav,Chyba';
@@ -132,6 +140,7 @@ export class HistoryService {
         return [csvHeader, ...csvRows].join('\n');
     }
 
+    /** Exportuje historii do formátu JSON. */
     public exportHistoryJSON(): string {
         const history = this.getHistory();
         return JSON.stringify(history, null, 2);

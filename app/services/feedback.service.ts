@@ -4,6 +4,7 @@ declare var android: any;
 declare var java: any;
 import { serviceRegistry } from './service-registry';
 
+/** Zvuková zpětná vazba (Android MediaPlayer) pro start/stop/error. */
 export class FeedbackService {
     private player: any;
     private readonly soundsPath: string;
@@ -16,14 +17,17 @@ export class FeedbackService {
         serviceRegistry.register(this);
     }
 
+    /** Přehraje zvuk začátku poslechu (start.mp3). */
     public async playStartSound() {
         await this.playSound('start.mp3');
     }
 
+    /** Přehraje zvuk ukončení poslechu (stop.mp3). */
     public async playStopSound() {
         await this.playSound('stop.mp3');
     }
 
+    /** Přehraje chybový zvuk (error.mp3). */
     public async playErrorSound() {
         await this.playSound('error.mp3');
     }
@@ -80,6 +84,7 @@ export class FeedbackService {
         }
     }
 
+    /** Uvolní prostředky přehrávače (voláno při ukončení aplikace). */
     public dispose() {
         if (this.player) {
             this.player.release();

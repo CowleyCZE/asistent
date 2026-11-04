@@ -74,6 +74,7 @@ export class ConnectivityService extends Observable {
         }
     }
 
+    /** Zastaví monitorování a uvolní prostředky (IDisposable). */
     public dispose(): void {
         this.stopMonitoring();
     }

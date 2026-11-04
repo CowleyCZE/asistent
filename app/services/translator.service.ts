@@ -1,7 +1,10 @@
 import { Http } from '@nativescript/core';
 import { API_CONFIG } from '../config/api-config';
 
+/** Překlad textu přes Google Translate API. */
 export class TranslatorService {
+    /** Přeloží text z češtiny do angličtiny.
+     * @returns Při chybě vrací původní text. */
     public async translate(text: string): Promise<string> {
         if (!text) return '';
         
@@ -38,6 +41,8 @@ export class TranslatorService {
         }
     }
 
+    /** Zjistí jazyk textu.
+     * @returns Při chybě vrací 'cs'. */
     public async detectLanguage(text: string): Promise<string> {
         if (!text) return 'cs';
         

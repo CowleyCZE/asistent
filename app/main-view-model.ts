@@ -4,6 +4,7 @@ import { SpeechRecognitionService } from './services/speech-recognition.service'
 import { TranslatorService } from './services/translator.service';
 import { PermissionsService } from './services/permissions.service';
 import { FeedbackService } from './services/feedback.service';
+import { ConnectivityService } from './services/connectivity.service';
 import { serviceLocator, ServiceTokens } from './services/service-locator';
 import { IAssistantService, ISettingsService, INotificationService } from './services/service-interfaces';
 import { themeService } from './app';
@@ -16,6 +17,7 @@ export class MainViewModel extends Observable {
     private settingsService: ISettingsService;
     private feedbackService: FeedbackService;
     private notificationService: INotificationService;
+    private connectivityService: ConnectivityService;
     
     private _isListening: boolean = false;
     private _status: string = "Kontrola oprávnění...";
@@ -40,6 +42,13 @@ export class MainViewModel extends Observable {
         this.checkPermissions();
         this.setupSpeechRecognition();
         this.checkOfflineStatus();
+
+        // Automatické zpracování offline fronty při obnově připojení
+        this.connectivityService = serviceLocator.get<ConnectivityService>(ServiceTokens.ConnectivityService);
+        this.connectivityService.on('connectionRestored', () => {
+            void this.processOfflineQueue();
+        });
+        this.connectivityService.startMonitoring();
     }
 
     private checkOfflineStatus() {

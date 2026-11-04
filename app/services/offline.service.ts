@@ -11,6 +11,7 @@ export interface OfflineCommand {
     actionTaskName?: string;
     timestamp: number;
     attempts: number;
+    priority?: number;
     lastAttempt?: number;
 }
 
@@ -27,14 +28,16 @@ export class OfflineService {
     private readonly MAX_ATTEMPTS = 3;
 
     /**
-     * Add command to offline queue
+     * Add command to offline queue.
+     * @param priority Priorita příkazu (vyšší = dřív zpracováno, výchozí 0)
      */
     public queueCommand(
         command: string,
         actionName: string,
         actionType: string,
         actionUrl?: string,
-        actionTaskName?: string
+        actionTaskName?: string,
+        priority: number = 0
     ): void {
         const queue = this.getQueue();
         
@@ -46,7 +49,8 @@ export class OfflineService {
             actionUrl,
             actionTaskName,
             timestamp: Date.now(),
-            attempts: 0
+            attempts: 0,
+            priority
         };
 
         queue.push(newEntry);
@@ -91,13 +95,18 @@ export class OfflineService {
     }
 
     /**
-     * Process next command in queue
+     * Process next command in queue.
+     * Priority queue – nejdřív se zpracují příkazy s nejvyšší prioritou,
+     * při shodě priorit platí FIFO (podle času zařazení).
      */
     public async processNextCommand(
         executeWebhook: (url: string) => Promise<boolean>,
         executeTasker: (taskName: string) => boolean
     ): Promise<boolean> {
-        const pending = this.getPendingCommands();
+        const queue = this.getQueue();
+        const pending = queue
+            .filter(cmd => cmd.attempts < this.MAX_ATTEMPTS)
+            .sort((a, b) => ((b.priority ?? 0) - (a.priority ?? 0)) || (a.timestamp - b.timestamp));
         if (pending.length === 0) {
             return false;
         }

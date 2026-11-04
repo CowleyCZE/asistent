@@ -98,8 +98,8 @@
 - [ ] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition
 - [ ] Implementovat continuous listening
 - [ ] Vylepšit wake word detection
-- [ ] Přidat automatické zpracování offline queue při obnově připojení
-- [ ] Implementovat priority queue pro offline příkazy
+- [x] Přidat automatické zpracování offline queue při obnově připojení
+- [x] Implementovat priority queue pro offline příkazy
 - [ ] Přidat push notifikace (Firebase)
 - [ ] Implementovat notifikační kanály
 

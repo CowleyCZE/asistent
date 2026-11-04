@@ -15,6 +15,7 @@ import { SpeechRecognitionService } from './speech-recognition.service';
 import { TranslatorService } from './translator.service';
 import { PermissionsService } from './permissions.service';
 import { FeedbackService } from './feedback.service';
+import { ConnectivityService } from './connectivity.service';
 
 /** Tokeny služeb (typově bezpečné klíče) */
 export const ServiceTokens = {
@@ -29,7 +30,8 @@ export const ServiceTokens = {
     SpeechRecognitionService: 'SpeechRecognitionService',
     TranslatorService: 'TranslatorService',
     PermissionsService: 'PermissionsService',
-    FeedbackService: 'FeedbackService'
+    FeedbackService: 'FeedbackService',
+    ConnectivityService: 'ConnectivityService'
 } as const;
 
 export class ServiceLocator {
@@ -54,6 +56,7 @@ export class ServiceLocator {
         this.container.register(ServiceTokens.TranslatorService, () => new TranslatorService());
         this.container.register(ServiceTokens.PermissionsService, () => new PermissionsService());
         this.container.register(ServiceTokens.FeedbackService, () => new FeedbackService());
+        this.container.register(ServiceTokens.ConnectivityService, () => new ConnectivityService());
     }
 
     /** Získá službu podle tokenu (singleton) */

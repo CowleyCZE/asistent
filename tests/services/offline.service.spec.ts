@@ -126,6 +126,31 @@ describe('OfflineService', () => {
         expect(service.getStats()).toEqual({ totalQueued: 0, totalFailed: 0, totalProcessed: 0 });
     });
 
+    it('queueCommand uloží prioritu příkazu', () => {
+        service.queueCommand('nizka', 'A', 'webhook', 'https://example.com/low');
+        service.queueCommand('vysoka', 'B', 'webhook', 'https://example.com/high', undefined, 10);
+        expect(service.getQueue()[0].priority).toBe(0);
+        expect(service.getQueue()[1].priority).toBe(10);
+    });
+
+    it('processNextCommand zpracuje nejdřív příkaz s vyšší prioritou', async () => {
+        service.queueCommand('nizka', 'A', 'webhook', 'https://example.com/low');
+        service.queueCommand('vysoka', 'B', 'webhook', 'https://example.com/high', undefined, 5);
+        const webhook = jest.fn().mockResolvedValue(true);
+        await service.processNextCommand(webhook as any, jest.fn() as any);
+        expect(webhook).toHaveBeenCalledWith('https://example.com/high');
+        expect(service.getQueueCount()).toBe(1);
+        expect(service.getQueue()[0].command).toBe('nizka');
+    });
+
+    it('při shodě priorit platí FIFO', async () => {
+        service.queueCommand('prvni', 'A', 'webhook', 'https://example.com/1');
+        service.queueCommand('druhy', 'B', 'webhook', 'https://example.com/2');
+        const webhook = jest.fn().mockResolvedValue(true);
+        await service.processNextCommand(webhook as any, jest.fn() as any);
+        expect(webhook).toHaveBeenCalledWith('https://example.com/1');
+    });
+
     it('exportQueue zapíše frontu do souboru', async () => {
         service.queueCommand('cmd', 'A', 'webhook', 'https://example.com/hook');
         const path = await service.exportQueue();

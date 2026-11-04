@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (3. běh)
+**Poslední aktualizace:** 4. listopadu 2026 (4. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -91,11 +91,11 @@
 ## P3 - NÍZKÁ PRIORITA
 
 ### UX/UI Vylepšení
-- [ ] Přidat responsive layouty
+- [x] Přidat responsive layouty (commit 2cdcf5e – media queries v app.css: tablety ≥720dp, malé telefony ≤360dp, landscape)
 - [ ] Testovat na různých zařízeních
-- [ ] Přidat animace pro všechny interakce
-- [ ] Vytvořit animace utility třídu
-- [ ] Přidat accessibility labels
+- [x] Přidat animace pro všechny interakce (commit 2cdcf5e – třída btn-press:active na všech 17 tlačítkách, CSS animace již existovaly)
+- [x] Vytvořit animace utility třídu (commit 2cdcf5e – app/utils/animation.utils.ts: fadeIn/Out, slideIn, pressFeedback, shake, popIn, revealSection)
+- [x] Přidat accessibility labels (commit 2cdcf5e – accessibilityLabel na 24 interaktivních prvcích: tlačítka, switche, slidery, textová pole všech 4 stránek)
 - [ ] Implementovat keyboard navigation
 - [ ] Přidat high contrast mode
 

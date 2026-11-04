@@ -7,7 +7,21 @@ describe('NotificationService', () => {
     beforeEach(() => {
         mockReset();
         service = new NotificationService();
+        describe('Notifikační kanály (P3)', () => {
+        it('vrátí jedinečné channel ID pro každý typ notifikace', () => {
+            const ids = ['success', 'error', 'warning', 'info'].map(
+                t => service.getChannelIdForType(t as any)
+            );
+            expect(new Set(ids).size).toBe(4);
+            expect(ids[0]).toBe('asistent_success');
+            expect(ids[1]).toBe('asistent_errors');
+        });
+
+        it('ensureNotificationChannels je bezpečným no-op mimo Android', () => {
+            expect(() => service.ensureNotificationChannels()).not.toThrow();
+        });
     });
+});
 
     it('vrátí výchozí nastavení', () => {
         const settings = service.getSettings();

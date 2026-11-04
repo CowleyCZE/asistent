@@ -28,6 +28,14 @@ describe('SpeechRecognitionService', () => {
         expect(recognizer.destroy).toHaveBeenCalled();
     });
 
+    it('setContinuousListening přepne kontinuální režim', () => {
+        expect(service.isContinuousListeningEnabled()).toBe(false);
+        service.setContinuousListening(true);
+        expect(service.isContinuousListeningEnabled()).toBe(true);
+        service.setContinuousListening(false);
+        expect(service.isContinuousListeningEnabled()).toBe(false);
+    });
+
     it('getRecognitionLanguage vrací výchozí cs-CZ', () => {
         expect(service.getRecognitionLanguage()).toBe('cs-CZ');
     });

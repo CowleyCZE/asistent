@@ -69,7 +69,7 @@ export class SettingsService {
                 return;
             }
             if (parsedOld.webhooks) {
-                const newActions: Action[] = parsedOld.webhooks.map(wh => ({
+                const newActions: Action[] = parsedOld.webhooks.map((wh: any) => ({
                     ...wh,
                     type: 'webhook'
                 }));

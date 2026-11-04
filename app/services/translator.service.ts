@@ -21,13 +21,13 @@ export class TranslatorService {
             });
 
             if (response.statusCode !== 200) {
-                console.error("Translation API error:", response.content.toString());
+                console.error("Translation API error:", response.content?.toString() ?? "");
                 return text;
             }
 
-            const result = response.content.toJSON();
+            const result: any = response.content?.toJSON();
             
-            if (result.data && result.data.translations && result.data.translations.length > 0) {
+            if (result?.data && result.data.translations && result.data.translations.length > 0) {
                 return result.data.translations[0].translatedText;
             }
             
@@ -54,13 +54,13 @@ export class TranslatorService {
             });
 
             if (response.statusCode !== 200) {
-                console.error("Language detection API error:", response.content.toString());
+                console.error("Language detection API error:", response.content?.toString() ?? "");
                 return 'cs';
             }
 
-            const result = response.content.toJSON();
+            const result: any = response.content?.toJSON();
             
-            if (result.data && result.data.detections && result.data.detections.length > 0) {
+            if (result?.data && result.data.detections && result.data.detections.length > 0) {
                 return result.data.detections[0][0].language;
             }
             

@@ -21,7 +21,7 @@ export interface IHistoryService {
 
 export interface ITextToSpeechService {
     isEnabled(): boolean;
-    speak(text: string): Promise<void>;
+    speak(text: string): Promise<boolean | void>;
 }
 
 export interface ICacheService {

@@ -137,9 +137,10 @@ export class AssistantService implements IAssistantService {
 
     private isOnline(): boolean {
         try {
-            if (global.android) {
-                const connectivityManager = global.android.context?.getSystemService(
-                    global.android.context?.CONNECTIVITY_SERVICE
+            const g: any = global;
+            if (g.android) {
+                const connectivityManager = g.android.context?.getSystemService(
+                    g.android.context?.CONNECTIVITY_SERVICE
                 );
                 if (connectivityManager) {
                     const networkInfo = connectivityManager.getActiveNetworkInfo();

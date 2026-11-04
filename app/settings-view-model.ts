@@ -61,10 +61,10 @@ export class SettingsViewModel extends Observable {
 
     private loadAvailableLanguages() {
         try {
-            this.availableLanguages = this.ttsService.getAvailableLanguages();
+            this._availableLanguages = this.ttsService.getAvailableLanguages();
         } catch (error) {
             console.error('Error loading available languages:', error);
-            this.availableLanguages = ['cs-CZ', 'en-US', 'sk-SK', 'de-DE', 'fr-FR'];
+            this._availableLanguages = ['cs-CZ', 'en-US', 'sk-SK', 'de-DE', 'fr-FR'];
         }
     }
 

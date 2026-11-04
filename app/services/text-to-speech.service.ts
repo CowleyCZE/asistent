@@ -1,5 +1,7 @@
 import { ApplicationSettings } from '@nativescript/core';
 import { SettingsService } from './settings.service';
+declare var android: any;
+declare var java: any;
 import { serviceRegistry } from './service-registry';
 
 export interface TTSConfig {
@@ -26,9 +28,10 @@ export class TextToSpeechService {
     private initialize() {
         try {
             // Android TTS initialization
-            if (global.android) {
+            const g: any = global;
+            if (g.android) {
                 const TextToSpeech = android.speech.tts.TextToSpeech;
-                const context = global.android.context || android.app.Application.getNativeApplication();
+                const context = g.android.context || android.app.Application.getNativeApplication();
 
                 this.ttsEngine = new TextToSpeech(context, (status: number) => {
                     if (status === TextToSpeech.SUCCESS) {

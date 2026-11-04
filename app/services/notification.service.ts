@@ -1,4 +1,5 @@
 import { ApplicationSettings } from '@nativescript/core';
+declare var android: any;
 import { StorageKeys, Colors } from '../utils/constants';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -227,20 +228,21 @@ export class NotificationService {
     private playSound(type: NotificationType) {
         try {
             // Android notification sound
-            if (global.android) {
+            const g: any = global;
+            if (g.android) {
                 const NotificationManager = android.app.NotificationManager;
                 const RingtoneManager = android.media.RingtoneManager;
                 const AudioManager = android.media.AudioManager;
 
-                const notificationManager = global.android.context?.getSystemService(
-                    global.android.context?.NOTIFICATION_SERVICE
+                const notificationManager = g.android.context?.getSystemService(
+                    g.android.context?.NOTIFICATION_SERVICE
                 );
 
                 if (notificationManager) {
                     const soundUri = this.getSoundUri(type);
                     if (soundUri) {
                         const ringtone = RingtoneManager.getRingtone(
-                            global.android.context,
+                            g.android.context,
                             soundUri
                         );
                         if (ringtone) {
@@ -274,10 +276,11 @@ export class NotificationService {
 
     private vibrate(type: NotificationType) {
         try {
-            if (global.android) {
+            const g: any = global;
+            if (g.android) {
                 const Vibrator = android.os.Vibrator;
                 const VibratorManager = android.os.VibratorManager;
-                const context = global.android.context;
+                const context = g.android.context;
 
                 if (context) {
                     const vibrator = context.getSystemService(context.VIBRATOR_SERVICE);

@@ -133,14 +133,15 @@ export class ThemeService {
         }
     }
 
-    private isSystemDarkMode(): boolean {
+    public isSystemDarkMode(): boolean {
         try {
             // Android dark mode detection
-            if (global.android) {
-                const uiMode = global.android.context?.getResources()?.getConfiguration()?.uiMode;
-                const nightMask = global.android.content.res.Configuration?.UI_MODE_NIGHT_MASK;
+            const g: any = global;
+            if (g.android) {
+                const uiMode = g.android.context?.getResources()?.getConfiguration()?.uiMode;
+                const nightMask = g.android.content.res.Configuration?.UI_MODE_NIGHT_MASK;
                 if (uiMode !== undefined && nightMask !== undefined) {
-                    return (uiMode & nightMask) === global.android.content.res.Configuration?.UI_MODE_NIGHT_YES;
+                    return (uiMode & nightMask) === g.android.content.res.Configuration?.UI_MODE_NIGHT_YES;
                 }
             }
             

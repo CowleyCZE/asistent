@@ -46,13 +46,13 @@ export class FeedbackService {
             // Připravíme přehrávač
             await new Promise<void>((resolve, reject) => {
                 this.player.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener({
-                    onPrepared: (mp) => {
+                    onPrepared: (mp: any) => {
                         resolve();
                     }
                 }));
                 
                 this.player.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener({
-                    onError: (mp, what, extra) => {
+                    onError: (mp: any, what: any, extra: any) => {
                         console.error('Chyba při přehrávání zvuku:', filename, what, extra);
                         reject(new Error(`Chyba přehrávání: ${what}`));
                         return true;
@@ -68,7 +68,7 @@ export class FeedbackService {
             // Počkáme na dokončení
             await new Promise<void>((resolve) => {
                 this.player.setOnCompletionListener(new android.media.MediaPlayer.OnCompletionListener({
-                    onCompletion: (mp) => {
+                    onCompletion: (mp: any) => {
                         console.log('Zvuk dokončen:', filename);
                         resolve();
                     }

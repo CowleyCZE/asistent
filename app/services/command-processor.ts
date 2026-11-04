@@ -108,26 +108,9 @@ export class CommandProcessor implements ICommandProcessor {
 
     /** Spustí webhook definovaný akcí (cache, historie, notifikace, log). */
     public async executeWebhookAction(action: Action): Promise<boolean> {
-        console.log(`Příkaz nalezen: "${action.name}". Volám webhook: ${action.url}`);
-
-        const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
-
-        // Check cache first
-        const cachedResponse = this.cacheService.getWebhookCache(action.url);
-
-        if (cachedResponse) {
-            console.log(`Using cached response for ${action.url}`);
-            this.historyService.addCommand(
-                action.phrase,
-                action.name,
-                'webhook',
-                'success'
-            );
-            return true;
-        }
-
-        // Null check a URL validace před síťovým voláním
-        if (!action?.url) {
+        // Null check URL před jakýmkoli dalším zpracováním (kvůli strictNullChecks)
+        const actionUrl = action?.url;
+        if (!actionUrl) {
             console.error(`Webhook akce "${action?.name ?? 'neznámá'}" nemá nastavenou URL.`);
             this.historyService.addCommand(
                 action?.phrase ?? '',
@@ -138,9 +121,28 @@ export class CommandProcessor implements ICommandProcessor {
             );
             return false;
         }
-        if (!Validators.isValidWebhookUrl(action.url)) {
-            console.error(`Neplatná webhook URL akce "${action.name}": ${action.url}`);
-            this.logger.error(`Neplatná URL webhooku: ${action.name} - ${action.url}`);
+
+        console.log(`Příkaz nalezen: "${action.name}". Volám webhook: ${actionUrl}`);
+
+        const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
+
+        // Check cache first
+        const cachedResponse = this.cacheService.getWebhookCache(actionUrl);
+
+        if (cachedResponse) {
+            console.log(`Using cached response for ${actionUrl}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'webhook',
+                'success'
+            );
+            return true;
+        }
+
+        if (!Validators.isValidWebhookUrl(actionUrl)) {
+            console.error(`Neplatná webhook URL akce "${action.name}": ${actionUrl}`);
+            this.logger.error(`Neplatná URL webhooku: ${action.name} - ${actionUrl}`);
             this.historyService.addCommand(
                 action.phrase,
                 action.name,
@@ -154,13 +156,13 @@ export class CommandProcessor implements ICommandProcessor {
         try {
             // fetch s timeoutem a retry s exponential backoff
             const response = await retryWithBackoff(
-                () => fetchWithTimeout(action.url, this.buildFetchOptions(action.url, webhookAuth), this.REQUEST_TIMEOUT_MS),
+                () => fetchWithTimeout(actionUrl, this.buildFetchOptions(actionUrl, webhookAuth), this.REQUEST_TIMEOUT_MS),
                 { retries: this.WEBHOOK_RETRIES, baseDelayMs: 1000 }
             );
 
             if (response.ok) {
                 console.log(`Webhook ${action.name} úspěšně zavolán.`);
-                this.logger.success(`${action.name} - ${action.url}`);
+                this.logger.success(`${action.name} - ${actionUrl}`);
                 this.historyService.addCommand(
                     action.phrase,
                     action.name,
@@ -169,7 +171,7 @@ export class CommandProcessor implements ICommandProcessor {
                 );
 
                 // Cache successful response (5 minut)
-                this.cacheService.setWebhookCache(action.url, {
+                this.cacheService.setWebhookCache(actionUrl, {
                     status: response.status,
                     statusText: response.statusText
                 }, 300000);

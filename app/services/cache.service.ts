@@ -20,6 +20,13 @@ export class CacheService {
     private readonly MAX_CACHE_SIZE = 50;
 
     /**
+     * Seznam všech klíčů v ApplicationSettings (allKeys chybí v typings).
+     */
+    private getAllKeys(): string[] {
+        return (ApplicationSettings as any).allKeys() as string[];
+    }
+
+    /**
      * Get cached value
      */
     public get<T>(key: string): T | null {
@@ -74,7 +81,7 @@ export class CacheService {
      * Clear all cache
      */
     public clearAll(): void {
-        const allKeys = ApplicationSettings.allKeys();
+        const allKeys = this.getAllKeys();
         allKeys.forEach(key => {
             if (key.startsWith(this.CACHE_PREFIX)) {
                 ApplicationSettings.remove(key);
@@ -94,7 +101,7 @@ export class CacheService {
      */
     public getStats(): { size: number; keys: string[] } {
         this.cleanupExpired();
-        const allKeys = ApplicationSettings.allKeys();
+        const allKeys = this.getAllKeys();
         const cacheKeys = allKeys.filter(key => key.startsWith(this.CACHE_PREFIX));
         return {
             size: cacheKeys.length,
@@ -108,7 +115,7 @@ export class CacheService {
      */
     public cleanupExpired(): number {
         let removed = 0;
-        const allKeys = ApplicationSettings.allKeys();
+        const allKeys = this.getAllKeys();
 
         allKeys.forEach(key => {
             if (!key.startsWith(this.CACHE_PREFIX)) {
@@ -156,7 +163,7 @@ export class CacheService {
     }
 
     private getEntriesWithTimestamps(): Array<{ key: string; timestamp: number }> {
-        const allKeys = ApplicationSettings.allKeys();
+        const allKeys = this.getAllKeys();
         const entries: Array<{ key: string; timestamp: number }> = [];
 
         allKeys.forEach(key => {
@@ -211,7 +218,7 @@ export class CacheService {
         if (url) {
             this.remove(`webhook_${url}`);
         } else {
-            const allKeys = ApplicationSettings.allKeys();
+            const allKeys = this.getAllKeys();
             allKeys.forEach(key => {
                 if (key.startsWith(this.CACHE_PREFIX + 'webhook_')) {
                     ApplicationSettings.remove(key);

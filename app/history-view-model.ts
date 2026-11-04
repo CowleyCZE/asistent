@@ -47,8 +47,8 @@ export class HistoryViewModel extends Observable {
             status: this.selectedStatus !== 'all' ? this.selectedStatus : undefined,
             actionType: this.selectedActionType !== 'all' ? this.selectedActionType : undefined,
             searchText: this.searchText || undefined,
-            startDate: this.startDate,
-            endDate: this.endDate
+            startDate: this.startDate ?? undefined,
+            endDate: this.endDate ?? undefined
         };
 
         this.filteredHistory = this.historyService.getFilteredHistory(filter);

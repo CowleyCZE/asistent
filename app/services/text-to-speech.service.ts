@@ -1,4 +1,4 @@
-import { ApplicationSettings } from '@nativescript/core';
+import { Application, ApplicationSettings } from '@nativescript/core';
 import { SettingsService } from './settings.service';
 declare var android: any;
 declare var java: any;
@@ -30,9 +30,10 @@ export class TextToSpeechService {
         try {
             // Android TTS initialization
             const g: any = global;
-            if (g.android) {
+            // Context získáváme z NativeScript Application (android.context neexistuje)
+            if (g.android && Application.android && Application.android.context) {
                 const TextToSpeech = android.speech.tts.TextToSpeech;
-                const context = g.android.context || android.app.Application.getNativeApplication();
+                const context = Application.android.context;
 
                 this.ttsEngine = new TextToSpeech(context, (status: number) => {
                     if (status === TextToSpeech.SUCCESS) {

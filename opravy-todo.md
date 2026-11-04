@@ -83,6 +83,10 @@
 
 ### Nové chyby
 - [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
+- [x] Odebrat použití DOM (document.documentElement) z app.ts a theme.service.ts – v NativeScript runtime DOM neexistuje, aplikace padala při startu v Preview (oprava: motiv přes CSS třídy na kořenovém view) #nová-chyba
+- [x] SpeechRecognitionService nespouštět wake word detekci v konstruktoru bez oprávnění (chybová smyčka), použít createSpeechRecognizer + isRecognitionAvailable, reset isListening v onError #nová-chyba
+- [x] PermissionsService: statický přístup k android.Manifest při importu modulu (crash) + neexistující android.support.v4 (nahrazeno androidx s fallbacky a lazy přístupem) #nová-chyba
+- [x] FeedbackService/TextToSpeechService: bezpečné vytváření Android objektů (try/catch, lazy MediaPlayer), context z Application.android místo neexistujícího android.context #nová-chyba
 - [x] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, ověřeno type checkem) #nová-chyba
 - [x] Opravit unit testy v CI (opraveno v commitech e93de43, e9b5a38, 5975086 a c4a1cf5 – history Date spy, statistics TS7006, cache evictBySize; workflow od 5975086 automaticky zakládá issue při selhání testů a od c4a1cf5 žádné nové selhání nenastalo ✅) #nová-chyba
 

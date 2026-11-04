@@ -16,7 +16,7 @@
         <!-- Tla\u010d\u00edtko pro aktivaci -->
         <Button text="{{ isListening ? 'Stop' : 'Start' }}" accessibilityLabel="{{ isListening ? 'Zastavit naslouchání' : 'Spustit naslouchání' }}" 
                 tap="{{ toggleListening }}" 
-                class="{{ isListening ? 'bg-red-500' : 'bg-green-500' }} text-white font-bold p-4 rounded-full btn-press transition-normal btn-press" />
+                class="{{ isListening ? 'bg-red-500' : 'bg-green-500' }} text-white font-bold p-4 rounded-full btn-press transition-normal" />
         
         <!-- Rozpoznan\u00fd text -->
         <StackLayout class="bg-theme-secondary p-4 rounded-lg shadow-theme" visibility="{{ recognizedText ? 'visible' : 'collapsed' }}" animation="fadeIn">

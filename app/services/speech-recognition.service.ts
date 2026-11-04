@@ -18,16 +18,27 @@ export class SpeechRecognitionService extends Observable {
         super();
         this.settingsService = new SettingsService();
         this.initializeSpeechRecognizer();
-        this.startWakeWordDetection();
+        // POZOR: wake word detekci nespouštíme v konstruktoru – SpeechRecognizer
+        // bez uděleného oprávnění k mikrofonu by jen vykával chybovou smyčku.
+        // Start zajišťuje MainViewModel po udělení oprávnění.
         
         // Register for cleanup on app exit
         serviceRegistry.register(this);
     }
 
     private initializeSpeechRecognizer() {
-        if (Application.android) {
+        if (Application.android && Application.android.context) {
             const context = Application.android.context;
-            this.speechRecognizer = new android.speech.SpeechRecognizer(context);
+            // Rozpoznávání řeči nemusí být na zařízení dostupné
+            if (android.speech.SpeechRecognizer.isRecognitionAvailable &&
+                !android.speech.SpeechRecognizer.isRecognitionAvailable(context)) {
+                console.warn('Rozpoznávání řeči není na tomto zařízení dostupné.');
+                return;
+            }
+            // Doporučený factory přístup místo přímého konstruktoru
+            this.speechRecognizer = android.speech.SpeechRecognizer.createSpeechRecognizer
+                ? android.speech.SpeechRecognizer.createSpeechRecognizer(context)
+                : new android.speech.SpeechRecognizer(context);
             
             const recognitionListener = new android.speech.RecognitionListener({
                 onResults: (results: any) => {
@@ -70,6 +81,9 @@ export class SpeechRecognitionService extends Observable {
                     }
                 },
                 onError: (error: number) => {
+                    // Po chybě recognizer není ve stavu poslechu – resetujeme příznak,
+                    // aby bylo možné poslech restartovat.
+                    this.isListening = false;
                     if (this.continuousListening) {
                         // Při chybě v detekci wake word znovu spustíme poslech
                         setTimeout(() => this.startWakeWordDetection(), 1000);
@@ -151,7 +165,7 @@ export class SpeechRecognitionService extends Observable {
 
     /** Spustí kontinuální poslech pro detekci wake word frází. */
     public startWakeWordDetection() {
-        if (Application.android && !this.isListening) {
+        if (Application.android && this.speechRecognizer && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, this.getRecognitionLanguage());
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
@@ -166,7 +180,7 @@ export class SpeechRecognitionService extends Observable {
 
     /** Spustí jednorázové rozpoznávání řeči (jazyk podle nastavení, výchozí cs-CZ). */
     public startListening() {
-        if (Application.android && !this.isListening) {
+        if (Application.android && this.speechRecognizer && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, this.getRecognitionLanguage());
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
@@ -180,7 +194,7 @@ export class SpeechRecognitionService extends Observable {
 
     /** Zastaví aktuální poslech. */
     public stopListening() {
-        if (this.isListening) {
+        if (this.isListening && this.speechRecognizer) {
             this.speechRecognizer.stopListening();
             this.isListening = false;
             this.continuousListening = false;

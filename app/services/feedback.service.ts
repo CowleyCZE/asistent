@@ -10,7 +10,16 @@ export class FeedbackService {
     private readonly soundsPath: string;
 
     constructor() {
-        this.player = new android.media.MediaPlayer();
+        // MediaPlayer vytváříme v try/catch – přímé volání v konstruktoru
+        // mimo Android by shodilo celou aplikaci.
+        try {
+            const g: any = global;
+            if (g.android) {
+                this.player = new android.media.MediaPlayer();
+            }
+        } catch (error) {
+            console.error('Chyba při vytváření MediaPlayer:', error);
+        }
         this.soundsPath = path.join(knownFolders.currentApp().path, 'assets', 'sounds');
         
         // Register for cleanup on app exit
@@ -34,6 +43,18 @@ export class FeedbackService {
 
     private async playSound(filename: string) {
         try {
+            // Lazy vytvoření přehrávače, pokud v konstruktoru selhalo
+            if (!this.player) {
+                const g: any = global;
+                if (g.android) {
+                    this.player = new android.media.MediaPlayer();
+                }
+            }
+            if (!this.player) {
+                console.warn('Přehrávač zvuků není dostupný (mimo Android).');
+                return;
+            }
+
             const soundPath = path.join(this.soundsPath, filename);
             
             // Zastavíme a uvolníme předchozí přehrávač

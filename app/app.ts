@@ -3,15 +3,13 @@ import './app.css';
 import { ThemeService } from './services/theme.service';
 import { serviceRegistry } from './services/service-registry';
 
-// Initialize theme service
+// Inicializace motivu. POZOR: v NativeScript runtime neexistuje DOM (document),
+// motiv se aplikuje přes CSS třídy (.dark/.light/.high-contrast) na kořenový view.
 const themeService = new ThemeService();
 
-// Apply theme based on saved settings
-const settings = themeService.getSettings();
-if (settings.mode === 'dark' || (settings.mode === 'system' && themeService.isSystemDarkMode())) {
-    document.documentElement?.classList.add('dark');
-} else {
-    document.documentElement?.classList.remove('dark');
+/** Aplikuje CSS třídy motivu na kořenový view, jakmile existuje. */
+function applyThemeToRootView(): void {
+    themeService.applyThemeToRootView();
 }
 
 // Register cleanup on application exit
@@ -24,3 +22,7 @@ Application.on(Application.exitEvent, () => {
 export { themeService, serviceRegistry };
 
 Application.run({ moduleName: 'app-root' });
+
+// Po spuštění aplikace aplikujeme motiv na kořenový view
+applyThemeToRootView();
+Application.on(Application.launchEvent, () => applyThemeToRootView());

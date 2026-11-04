@@ -1,4 +1,4 @@
-import { ApplicationSettings } from '@nativescript/core';
+import { Application, ApplicationSettings } from '@nativescript/core';
 import { StorageKeys } from '../utils/constants';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -152,20 +152,41 @@ export class ThemeService {
 
     private updateCssVariables(isDark: boolean) {
         const settings = this.getSettings();
-        const root = document.documentElement || document.body;
-        
-        if (root) {
-            root.style.setProperty('--primary-color', settings.primaryColor);
-            root.style.setProperty('--accent-color', settings.accentColor);
-            // High contrast mód: čistě černobílé pozadí, výrazné okraje, žádné stíny
-            const highContrast = settings.highContrast;
+        const highContrast = settings.highContrast;
 
-            root.style.setProperty('--bg-primary', isDark ? (highContrast ? '#000000' : '#1a1a1a') : '#ffffff');
-            root.style.setProperty('--bg-secondary', isDark ? (highContrast ? '#0d0d0d' : '#2d2d2d') : (highContrast ? '#f2f2f2' : '#f5f5f5'));
-            root.style.setProperty('--text-primary', isDark ? '#ffffff' : '#000000');
-            root.style.setProperty('--text-secondary', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#cccccc' : '#666666'));
-            root.style.setProperty('--border-color', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#444444' : '#e0e0e0'));
-            root.style.setProperty('--shadow-color', highContrast ? 'none' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'));
+        // DOM cesta (webové prostředí / testy) – v NativeScript runtime DOM NEEXISTUJE!
+        if (typeof document !== 'undefined') {
+            const root = document.documentElement || document.body;
+            if (root) {
+                root.style.setProperty('--primary-color', settings.primaryColor);
+                root.style.setProperty('--accent-color', settings.accentColor);
+                root.style.setProperty('--bg-primary', isDark ? (highContrast ? '#000000' : '#1a1a1a') : '#ffffff');
+                root.style.setProperty('--bg-secondary', isDark ? (highContrast ? '#0d0d0d' : '#2d2d2d') : (highContrast ? '#f2f2f2' : '#f5f5f5'));
+                root.style.setProperty('--text-primary', isDark ? '#ffffff' : '#000000');
+                root.style.setProperty('--text-secondary', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#cccccc' : '#666666'));
+                root.style.setProperty('--border-color', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#444444' : '#e0e0e0'));
+                root.style.setProperty('--shadow-color', highContrast ? 'none' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'));
+            }
+            return;
+        }
+
+        // NativeScript runtime – motiv aplikujeme přes CSS třídy na kořenový view;
+        // CSS proměnné (.dark/.light/.high-contrast) jsou definované v app.css.
+        this.applyThemeToRootView();
+    }
+
+    /**
+     * Aplikuje CSS třídy motivu na kořenový view aplikace.
+     * Volá se při startu aplikace i po každé změně motivu.
+     */
+    public applyThemeToRootView(): void {
+        try {
+            const root = (Application as any).getRootView?.();
+            if (root) {
+                root.className = this.getThemeClasses();
+            }
+        } catch (error) {
+            // Kořenový view ještě nemusí existovat (start aplikace) – ignorujeme.
         }
     }
 
@@ -174,11 +195,14 @@ export class ThemeService {
         try {
             // Android dark mode detection
             const g: any = global;
-            if (g.android) {
-                const uiMode = g.android.context?.getResources()?.getConfiguration()?.uiMode;
-                const nightMask = g.android.content.res.Configuration?.UI_MODE_NIGHT_MASK;
-                if (uiMode !== undefined && nightMask !== undefined) {
-                    return (uiMode & nightMask) === g.android.content.res.Configuration?.UI_MODE_NIGHT_YES;
+            // Context získáváme z NativeScript Application (android.context neexistuje)
+            const androidContext = (Application as any).android?.context ?? g.android?.context;
+            if (androidContext) {
+                const uiMode = androidContext.getResources()?.getConfiguration()?.uiMode;
+                const nightMask = g.android?.content?.res?.Configuration?.UI_MODE_NIGHT_MASK ?? 0x30; // UI_MODE_NIGHT_MASK
+                const nightYes = g.android?.content?.res?.Configuration?.UI_MODE_NIGHT_YES ?? 0x20;   // UI_MODE_NIGHT_YES
+                if (uiMode !== undefined) {
+                    return (uiMode & nightMask) === nightYes;
                 }
             }
             

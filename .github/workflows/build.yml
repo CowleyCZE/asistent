@@ -36,18 +36,26 @@ jobs:
 
       - name: Publish test output to job summary
         if: failure()
-        run: tail -n 300 /tmp/test.log >> $GITHUB_STEP_SUMMARY
+        run: tail -n 300 /tmp/test.log >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Emit failing tests as annotations
+        if: failure()
+        run: |
+          grep -E '✕|✗|●|FAIL ' /tmp/test.log | head -60 | while IFS= read -r line; do
+            line=${line#}
+            echo "::error::${line:0:200}"
+          done
+          true
 
       - name: Report test failures as issue
         if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tail -n 200 /tmp/test.log > /tmp/body.md || echo 'test log nenalezen' > /tmp/body.md
-          curl -sf -X POST \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/CowleyCZE/asistent/issues \
-            -d "{\"title\":\"CI: unit testy selhaly (commit ${{ github.sha }})\",\"body\":$(jq -Rs . /tmp/body.md)}"
-          || true
+          gh issue create --repo CowleyCZE/asistent \
+            --title "CI: unit testy selhaly (commit ${{ github.sha }})" \
+            --body-file /tmp/body.md || true
 
       - name: Setup NativeScript
         run: |

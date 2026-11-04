@@ -262,7 +262,13 @@ CI (GitHub Actions, `.github/workflows/build.yml`) na každý push do `main`:
 - **Žádné magic strings** – klíče úložiště a barvy patří do `app/utils/constants.ts` (`StorageKeys`, `Colors`, `Limits`).
 - **DI před statickými importy** – služby získávejte přes `serviceLocator.get(ServiceTokens.X)`, rozhraní (`service-interfaces.ts`) před konkrétními třídami.
 - **Validace a error handling** – vstupy sanitizujte přes `Validators` (`app/utils/validation.ts`), síťová volání přes `fetchWithTimeout` + `retryWithBackoff`, chyby logujte přes `ErrorHandler`/`LoggerService`.
-- **Naming**: třídy `PascalCase` (`OfflineService`), metody a proměnné `camelCase`, konstanty v `constants.ts` `PascalCase`, soubory `kebab-case.service.ts`.
+- **Naming konvence** (standardizováno, ověřeno proti stavu kódu):
+  - Třídy: `PascalCase` + přípona dle role – `OfflineService`, `CommandProcessor`, `DIContainer`, `ServiceLocator`, `LazyNavigator`.
+  - Interfejcy: prefix `I` (`ISettingsService`, `service-interfaces.ts`); datové typy bez prefixu (`Action`, `ThemeMode`, `CommandHistory`).
+  - Metody, vlastnosti a proměnné: `camelCase`; boolean getry `is*` / `has*` / `are*` (`isOnline()`, `hasNotifications()`, `areAnimationsEnabled()`).
+  - Soubory: `kebab-case`; služby s příponou `*.service.ts` (`offline.service.ts`), infrastruktura bez přípony (`di-container.ts`, `service-locator.ts`, `command-processor.ts`), utility v `app/utils/*.ts`.
+  - Konstanty: `UPPER_SNAKE_CASE` uvnitř tříd (`REQUEST_TIMEOUT_MS`); exportované objekty konstant `PascalCase` (`StorageKeys`, `Colors`, `Limits`, `ServiceTokens`).
+  - Testy: zrcadlí zdrojový soubor – `tests/services/<nazev-sluzby>.service.spec.ts`.
 - **JSDoc** pro veřejné metody služeb (krátce: co, parametry, návratová hodnota).
 - **Testy**: unit testy v `tests/services/*.spec.ts` (Jest + ts-jest, mocky v `tests/mocks/`), E2E v `tests/e2e/`. Nová služba = nový spec.
 

@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,7 +32,22 @@ jobs:
         run: npm run typecheck
 
       - name: Run unit tests
-        run: npm test -- --ci
+        run: set -o pipefail && npm test -- --ci 2>&1 | tee /tmp/jest-output.log
+
+      - name: Report unit test failures as GitHub issue
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "CI: unit testy selhaly (commit ${{ github.sha }})"
+            echo ""
+            tail -n 500 /tmp/jest-output.log
+          } > /tmp/issue-body.md
+          gh issue create -R "${{ github.repository }}" \
+            --title "CI: unit testy selhaly (commit ${{ github.sha }})" \
+            --body-file /tmp/issue-body.md || true
 
       - name: Coverage check (thresholds)
         run: npm test -- --coverage --ci

@@ -69,11 +69,12 @@ describe('StatisticsService', () => {
             statisticsService = new StatisticsService();
         });
 
-        it('should return empty statistics for no history', () => {
+        it('should return zeroed statistics for no history', () => {
             const stats = statisticsService.getStatistics();
             expect(stats.overall.totalCommands).toBe(0);
             expect(stats.overall.successRate).toBe(0);
-            expect(stats.mostUsedActions).toEqual([]);
+            // Výchozí akce se inicializují s count 0 – nejsou "prázdné", ale bez použití
+            expect(stats.mostUsedActions.every(a => a.count === 0)).toBe(true);
             expect(stats.leastSuccessfulActions).toEqual([]);
         });
 

@@ -72,6 +72,35 @@ describe('ThemeService', () => {
         expect(service.areAnimationsEnabled()).toBe(false);
     });
 
+    it('setHighContrast zapne vysoký kontrast', () => {
+        service.setHighContrast(true);
+        expect(service.isHighContrastEnabled()).toBe(true);
+        expect(service.getThemeClasses()).toBe(service.getThemeClass() + ' high-contrast');
+    });
+
+    it('toggleHighContrast přepne vysoký kontrast', () => {
+        expect(service.isHighContrastEnabled()).toBe(false);
+        service.toggleHighContrast();
+        expect(service.isHighContrastEnabled()).toBe(true);
+        service.toggleHighContrast();
+        expect(service.isHighContrastEnabled()).toBe(false);
+    });
+
+    it('applyTheme s highContrast použije čistě černobílé barvy', () => {
+        service.setHighContrast(true);
+        service.applyTheme('dark');
+        expect(setStyle).toHaveBeenCalledWith('--bg-primary', '#000000');
+        expect(setStyle).toHaveBeenCalledWith('--border-color', '#ffffff');
+        expect(setStyle).toHaveBeenCalledWith('--shadow-color', 'none');
+        service.applyTheme('light');
+        expect(setStyle).toHaveBeenCalledWith('--border-color', '#000000');
+    });
+
+    it('getThemeClasses bez highContrast vrací pouze základní třídu', () => {
+        service.setHighContrast(false);
+        expect(service.getThemeClasses()).toBe(service.getThemeClass());
+    });
+
     it('applyTheme aktualizuje CSS proměnné', () => {
         service.applyTheme('dark');
         expect(setStyle).toHaveBeenCalledWith('--bg-primary', '#1a1a1a');

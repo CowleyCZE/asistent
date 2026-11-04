@@ -29,7 +29,11 @@ jobs:
         run: npm run typecheck
 
       - name: Run unit tests with coverage
-        run: npm test -- --coverage
+        run: npm test -- --coverage 2>&1 | tee /tmp/test.log; exit ${PIPESTATUS[0]}
+
+      - name: Publish test output to job summary
+        if: failure()
+        run: tail -n 300 /tmp/test.log >> $GITHUB_STEP_SUMMARY
 
       - name: Setup NativeScript
         run: |

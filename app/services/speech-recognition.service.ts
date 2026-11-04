@@ -4,6 +4,7 @@ declare var android: any;
 declare var java: any;
 import { SettingsService } from './settings.service';
 import { serviceRegistry } from './service-registry';
+import { WakeWordMatcher } from '../utils/wake-word.utils';
 
 /** Rozpoznávání řeči (Android SpeechRecognizer) včetně wake word detekce. */
 export class SpeechRecognitionService extends Observable {
@@ -37,9 +38,8 @@ export class SpeechRecognitionService extends Observable {
                         if (this.continuousListening) {
                             // Kontrola wake phrases
                             const settings = this.settingsService.getSettings();
-                            const isWakePhrase = settings.wakePhrases.some(phrase => 
-                                recognizedText.toLowerCase().includes(phrase.toLowerCase())
-                            );
+                            // Fuzzy detekce wake word (normalizace + tolerance 1 chyby)
+                            const isWakePhrase = WakeWordMatcher.matches(recognizedText, settings.wakePhrases);
 
                             if (isWakePhrase) {
                                 this.continuousListening = false;
@@ -79,6 +79,30 @@ export class SpeechRecognitionService extends Observable {
                             object: this,
                             error: error
                         });
+                    }
+                },
+                onPartialResults: (partialResults: any) => {
+                    if (this.continuousListening) {
+                        try {
+                            const partial = partialResults?.getStringArrayList?.(
+                                android.speech.SpeechRecognizer.RESULTS_RECOGNITION
+                            );
+                            if (partial && partial.size() > 0) {
+                                const partialText = partial.get(0);
+                                const wakePhrases = this.settingsService.getSettings().wakePhrases;
+                                // Rychlejší detekce: wake word poznáme už z parciálního výsledku
+                                if (WakeWordMatcher.matches(partialText, wakePhrases)) {
+                                    this.stopListening();
+                                    this.notify({
+                                        eventName: 'wakeWordDetected',
+                                        object: this
+                                    });
+                                    setTimeout(() => this.startListening(), 500);
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Chyba při zpracování parciálních výsledků:', error);
+                        }
                     }
                 },
                 onReadyForSpeech: () => {

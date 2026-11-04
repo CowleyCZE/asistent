@@ -35,6 +35,14 @@ export class SettingsViewModel extends Observable {
     private _ttsRate: number = 1.0;
     private _availableLanguages: string[] = [];
 
+    // Podporované jazyky rozpoznávání řeči (P3)
+    private _availableRecognitionLanguages: { label: string; value: string }[] = [
+        { label: 'Čeština (cs-CZ)', value: 'cs-CZ' },
+        { label: 'English (en-US)', value: 'en-US' },
+        { label: 'Deutsch (de-DE)', value: 'de-DE' },
+        { label: 'Slovenčina (sk-SK)', value: 'sk-SK' }
+    ];
+
     // Theme vlastnosti
     private _themeModes: { label: string; value: 'light' | 'dark' | 'system' }[] = [
         { label: 'Systém', value: 'system' },
@@ -188,6 +196,22 @@ export class SettingsViewModel extends Observable {
     }
 
     get availableLanguages(): string[] { return this._availableLanguages; }
+
+    // Jazyk rozpoznávání řeči
+    /** Dostupné jazyky rozpoznávání řeči pro DropDown v nastavení. */
+    get availableRecognitionLanguages(): { label: string; value: string }[] {
+        return this._availableRecognitionLanguages;
+    }
+
+    /** Aktuální jazyk rozpoznávání řeči. */
+    get recognitionLanguage(): string {
+        return this.settingsService.getSpeechLanguage();
+    }
+
+    set recognitionLanguage(value: string) {
+        this.settingsService.updateSpeechLanguage(value);
+        this.notifyPropertyChange('recognitionLanguage', value);
+    }
 
     // Theme Gettery
     get themeModes(): { label: string; value: 'light' | 'dark' | 'system' }[] {

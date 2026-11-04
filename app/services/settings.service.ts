@@ -27,6 +27,7 @@ export interface AppSettings {
     ttsLanguage: string;
     ttsPitch: number;
     ttsRate: number;
+    speechLanguage: string; // Jazyk rozpoznávání řeči (cs-CZ, en-US, de-DE, sk-SK)
     webhookAuth?: WebhookAuth;
 }
 
@@ -46,6 +47,7 @@ export class SettingsService {
         ttsLanguage: 'cs-CZ',
         ttsPitch: 1.0,
         ttsRate: 1.0,
+        speechLanguage: 'cs-CZ',
         webhookAuth: {
             apiKey: '',
             hmacSecret: '',
@@ -100,6 +102,7 @@ export class SettingsService {
                 parsed.ttsLanguage = parsed.ttsLanguage ?? this.DEFAULT_SETTINGS.ttsLanguage;
                 parsed.ttsPitch = parsed.ttsPitch ?? this.DEFAULT_SETTINGS.ttsPitch;
                 parsed.ttsRate = parsed.ttsRate ?? this.DEFAULT_SETTINGS.ttsRate;
+                parsed.speechLanguage = parsed.speechLanguage ?? this.DEFAULT_SETTINGS.speechLanguage;
                 parsed.feedbackEnabled = parsed.feedbackEnabled ?? this.DEFAULT_SETTINGS.feedbackEnabled;
                 parsed.sensitivity = typeof parsed.sensitivity === 'number' ? parsed.sensitivity : this.DEFAULT_SETTINGS.sensitivity;
                 return parsed;
@@ -224,6 +227,27 @@ export class SettingsService {
             pitch: settings.ttsPitch,
             rate: settings.ttsRate
         };
+    }
+
+    // Speech Recognition Settings
+    /** Podporované jazyky rozpoznávání řeči. */
+    public static readonly SUPPORTED_RECOGNITION_LANGUAGES: string[] = ['cs-CZ', 'en-US', 'de-DE', 'sk-SK'];
+
+    /** Vrací jazyk rozpoznávání řeči (výchozí cs-CZ). */
+    public getSpeechLanguage(): string {
+        const settings = this.getSettings();
+        return settings.speechLanguage ?? this.DEFAULT_SETTINGS.speechLanguage;
+    }
+
+    /** Nastaví jazyk rozpoznávání řeči (pouze podporované jazyky, jinak beze změny). */
+    public updateSpeechLanguage(language: string) {
+        if (!SettingsService.SUPPORTED_RECOGNITION_LANGUAGES.includes(language)) {
+            console.error('Nepodporovaný jazyk rozpoznávání řeči:', language);
+            return;
+        }
+        const settings = this.getSettings();
+        settings.speechLanguage = language;
+        this.saveSettings(settings);
     }
 
     // Webhook Auth Settings

@@ -92,11 +92,27 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
+    /** Vrací aktuálně nastavený jazyk rozpoznávání řeči (výchozí cs-CZ). */
+    public getRecognitionLanguage(): string {
+        try {
+            const settings = this.settingsService.getSettings();
+            return settings.speechLanguage || 'cs-CZ';
+        } catch (error) {
+            console.error('Chyba při čtení jazyka rozpoznávání:', error);
+            return 'cs-CZ';
+        }
+    }
+
+    /** Nastaví jazyk rozpoznávání řeči (cs-CZ, en-US, de-DE, sk-SK). */
+    public setRecognitionLanguage(language: string) {
+        this.settingsService.updateSpeechLanguage(language);
+    }
+
     /** Spustí kontinuální poslech pro detekci wake word frází. */
     public startWakeWordDetection() {
         if (Application.android && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
-            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "cs-CZ");
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, this.getRecognitionLanguage());
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
                           android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
@@ -111,7 +127,7 @@ export class SpeechRecognitionService extends Observable {
     public startListening() {
         if (Application.android && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();
-            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "cs-CZ");
+            intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, this.getRecognitionLanguage());
             intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
                           android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             

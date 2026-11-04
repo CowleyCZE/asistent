@@ -34,6 +34,21 @@
             <Slider value="{{ sensitivity }}" accessibilityLabel="Citlivost rozpoznávání" minValue="0" maxValue="1" class="ml-2" />
             <Label text="{{ sensitivity | number:'1.1' }}" class="text-center text-theme-secondary" />
 
+            <!-- Jazyk rozpoznávání řeči (P3) -->
+            <StackLayout>
+                <Label text="Jazyk rozpoznávání řeči" class="text-sm font-medium text-theme-secondary" />
+                <DropDown selectedIndex="0" class="p-2 bg-white rounded border-theme border-width-1 text-gray-800" accessibilityLabel="Jazyk rozpoznávání řeči">
+                    <DropDown.items>
+                        <DropDownItem v-for="lang in availableRecognitionLanguages" 
+                                     [value]="lang.value"
+                                     [text]="lang.label" />
+                    </DropDown.items>
+                    <DropDown.selectedValue twoWay="true">
+                        <Binding path="recognitionLanguage" />
+                    </DropDown.selectedValue>
+                </DropDown>
+            </StackLayout>
+
             <!-- Akce -->
             <Label text="Akce" class="text-lg font-bold text-theme-primary mt-6 border-t-2 border-theme pt-4" />
 

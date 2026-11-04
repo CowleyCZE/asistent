@@ -33,6 +33,14 @@ export class NotificationService {
     private readonly DEFAULT_DURATION = 5000; // 5 seconds
     private readonly MAX_NOTIFICATIONS = 10;
 
+    /** Android notifikační kanály podle typu notifikace (Android 8+/API 26+). */
+    private static readonly CHANNELS: Record<NotificationType, { id: string; name: string; importance: string }> = {
+        success: { id: 'asistent_success', name: 'Úspěšné akce', importance: 'IMPORTANCE_DEFAULT' },
+        error: { id: 'asistent_errors', name: 'Chyby', importance: 'IMPORTANCE_HIGH' },
+        warning: { id: 'asistent_warnings', name: 'Varování', importance: 'IMPORTANCE_DEFAULT' },
+        info: { id: 'asistent_info', name: 'Informace', importance: 'IMPORTANCE_LOW' }
+    };
+
     private activeNotifications: Notification[] = [];
     private notificationQueue: Notification[] = [];
 
@@ -67,6 +75,57 @@ export class NotificationService {
         const current = this.loadSettings();
         const newSettings = { ...current, ...settings };
         ApplicationSettings.setString(this.NOTIFICATION_SETTINGS_KEY, JSON.stringify(newSettings));
+    }
+
+    /** Vrací Android notification channel ID pro daný typ notifikace. */
+    public getChannelIdForType(type: NotificationType): string {
+        return NotificationService.CHANNELS[type].id;
+    }
+
+    /**
+     * Vytvoří (idempotentně) Android notifikační kanály (Android 8+/API 26+).
+     * Na starších verzích Androidu a mimo Android je volání bezpečným no-op.
+     */
+    public ensureNotificationChannels(): void {
+        try {
+            const g: any = global;
+            if (!g.android || !g.android.context) {
+                return;
+            }
+
+            const sdk: number = g.android.os?.Build?.VERSION?.SDK_INT ?? 0;
+            if (sdk < 26) {
+                return; // NotificationChannel API je až od Androidu 8.0
+            }
+
+            const manager = g.android.context.getSystemService(
+                g.android.content?.Context?.NOTIFICATION_SERVICE
+            );
+            if (!manager) {
+                return;
+            }
+
+            for (const type of Object.keys(NotificationService.CHANNELS) as NotificationType[]) {
+                const def = NotificationService.CHANNELS[type];
+                if (manager.getNotificationChannel(def.id)) {
+                    continue; // kanál už existuje
+                }
+
+                const importance: number =
+                    g.android.app?.NotificationManager?.[def.importance] ??
+                    g.android.app.NotificationManager.IMPORTANCE_DEFAULT;
+
+                const channel = new g.android.app.NotificationChannel(
+                    def.id,
+                    def.name,
+                    importance
+                );
+                channel.setDescription(`Notifikace typu ${def.name.toLowerCase()}`);
+                manager.createNotificationChannel(channel);
+            }
+        } catch (error) {
+            console.error('Chyba při vytváření notifikačních kanálů:', error);
+        }
     }
 
     /** Zjistí, zda jsou notifikace povoleny. */
@@ -233,6 +292,9 @@ export class NotificationService {
 
     private showNotification(notification: Notification) {
         const settings = this.loadSettings();
+
+        // Vytvoříme (jednorázově) Android notifikační kanály
+        this.ensureNotificationChannels();
         
         // Play sound if enabled
         if (settings.soundEnabled) {

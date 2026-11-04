@@ -11,6 +11,7 @@ export class SpeechRecognitionService extends Observable {
     private isListening: boolean = false;
     private settingsService: SettingsService;
     private continuousListening: boolean = false;
+    private continuousMode: boolean = false; // automatický restart poslechu po každém výsledku
 
     constructor() {
         super();
@@ -59,6 +60,12 @@ export class SpeechRecognitionService extends Observable {
                                 object: this,
                                 text: recognizedText
                             });
+
+                            // Continuous listening: po výsledku automaticky restartujeme poslech
+                            if (this.continuousMode) {
+                                this.isListening = false;
+                                setTimeout(() => this.startListening(), 300);
+                            }
                         }
                     }
                 },
@@ -90,6 +97,16 @@ export class SpeechRecognitionService extends Observable {
 
             this.speechRecognizer.setRecognitionListener(recognitionListener);
         }
+    }
+
+    /** Zapne nebo vypne kontinuální režim – poslech se po každém výsledku automaticky restartuje. */
+    public setContinuousListening(enabled: boolean) {
+        this.continuousMode = enabled;
+    }
+
+    /** Zjistí, zda je zapnut kontinuální režim poslechu. */
+    public isContinuousListeningEnabled(): boolean {
+        return this.continuousMode;
     }
 
     /** Vrací aktuálně nastavený jazyk rozpoznávání řeči (výchozí cs-CZ). */

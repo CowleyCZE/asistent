@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (4. běh, pokračování)
+**Poslední aktualizace:** 4. listopadu 2026 (5. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -84,7 +84,7 @@
 ### Nové chyby
 - [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
 - [x] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, ověřeno type checkem) #nová-chyba
-- [ ] Opravit unit testy v CI – krok "Run unit tests with coverage" selhává (exit 1) již od starších commitů (#4–#11): assistant.service.spec.ts je zastaralý vůči refaktoringu na CommandProcessor (oprava: spec přepsán na constructor injection v e93de43, signatury show* a fetch mock fixovány v e9b5a38; coverage navýšen novým specem command-processor.service.spec.ts) – čeká na ověření zeleného CI běhu #nová-chyba
+- [x] Opravit unit testy v CI (opraveno v commitech e93de43, e9b5a38, 5975086 a c4a1cf5 – history Date spy, statistics TS7006, cache evictBySize; workflow od 5975086 automaticky zakládá issue při selhání testů a od c4a1cf5 žádné nové selhání nenastalo ✅) #nová-chyba
 
 ---
 
@@ -101,12 +101,12 @@
 
 ### Funkční vylepšení
 - [x] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition (commity 6482cc9 + 7bda24e – speechLanguage v nastavení, výběr v UI, podporováno cs-CZ/en-US/de-DE/sk-SK, unit testy)
-- [ ] Implementovat continuous listening
+- [x] Implementovat continuous listening (commit bbd079b – continuousMode ve SpeechRecognitionService, setContinuousListening, auto-restart 300 ms po speechResult, unit testy)
 - [ ] Vylepšit wake word detection
 - [x] Přidat automatické zpracování offline queue při obnově připojení
 - [x] Implementovat priority queue pro offline příkazy
 - [ ] Přidat push notifikace (Firebase)
-- [ ] Implementovat notifikační kanály
+- [x] Implementovat notifikační kanály (commit bbd079b – CHANNELS v NotificationService: success/errors/warnings/info s IMPORTANCE_*, ensureNotificationChannels idempotentní no-op mimo Android ≥26, unit testy)
 
 ### Design
 - [ ] Přidat moderní UI komponenty

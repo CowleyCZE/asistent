@@ -100,7 +100,7 @@
 - [x] Přidat high contrast mode (commit 00a48cd – highContrast v ThemeService, přepínač v Nastavení > Vzhled, .high-contrast CSS třídy)
 
 ### Funkční vylepšení
-- [ ] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition
+- [x] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition (commity 6482cc9 + 7bda24e – speechLanguage v nastavení, výběr v UI, podporováno cs-CZ/en-US/de-DE/sk-SK, unit testy)
 - [ ] Implementovat continuous listening
 - [ ] Vylepšit wake word detection
 - [x] Přidat automatické zpracování offline queue při obnově připojení

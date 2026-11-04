@@ -279,3 +279,30 @@
         min-height: 44;
     }
 }
+
+/* ============================================
+   HIGH CONTRAST MODE (P3)
+   Zapíná se v Nastavení > Vzhled; ThemeService
+   přidává na kořen stránky třídu .high-contrast
+   ============================================ */
+.high-contrast .border-theme {
+    border-color: #808080;
+    border-width: 2;
+}
+
+.high-contrast .shadow-theme {
+    box-shadow: none;
+}
+
+.high-contrast Button {
+    border-width: 2;
+    border-color: #ffffff;
+}
+
+.high-contrast .text-theme-secondary {
+    color: #000000;
+}
+
+.dark.high-contrast .text-theme-secondary {
+    color: #ffffff;
+}

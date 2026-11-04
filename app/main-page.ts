@@ -1,4 +1,5 @@
 import { EventData, Page } from '@nativescript/core';
+import { KeyboardNavigationHelper } from './utils/keyboard-navigation.utils';
 import { MainViewModel } from './main-view-model';
 
 // Lazy loading – view-model se vytvoří až při první navigaci
@@ -15,6 +16,9 @@ export function navigatingTo(args: EventData) {
         viewModel = new MainViewModel();
     }
     page.bindingContext = viewModel;
+
+    // Hardwarová klávesnice / D-pad (Android TV, accessibility ovladače)
+    KeyboardNavigationHelper.attach(page);
 }
 
 /**

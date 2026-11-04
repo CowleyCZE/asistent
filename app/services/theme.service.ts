@@ -8,6 +8,8 @@ export interface ThemeSettings {
     primaryColor: string;
     accentColor: string;
     useAnimations: boolean;
+    /** Vysoký kontrast pro lepší čitelnost (accessibility). */
+    highContrast: boolean;
 }
 
 /** Správa motivu aplikace (světlý/tmavý/systém) a CSS proměnných. */
@@ -18,7 +20,8 @@ export class ThemeService {
         mode: 'system',
         primaryColor: '#3b82f6', // blue-500
         accentColor: '#8b5cf6',  // purple-500
-        useAnimations: true
+        useAnimations: true,
+        highContrast: false
     };
 
     constructor() {
@@ -75,6 +78,21 @@ export class ThemeService {
     /** Zapne nebo vypne animace motivu. */
     public setAnimations(enabled: boolean) {
         this.saveSettings({ useAnimations: enabled });
+    }
+
+    /** Zapne nebo vypne vysoký kontrast. */
+    public setHighContrast(enabled: boolean) {
+        this.saveSettings({ highContrast: enabled });
+    }
+
+    /** Zjistí, zda je vysoký kontrast povolen. */
+    public isHighContrastEnabled(): boolean {
+        return this.getSettings().highContrast;
+    }
+
+    /** Přepne vysoký kontrast. */
+    public toggleHighContrast() {
+        this.setHighContrast(!this.isHighContrastEnabled());
     }
 
     /** Vrací aktuální režim motivu. */
@@ -139,12 +157,15 @@ export class ThemeService {
         if (root) {
             root.style.setProperty('--primary-color', settings.primaryColor);
             root.style.setProperty('--accent-color', settings.accentColor);
-            root.style.setProperty('--bg-primary', isDark ? '#1a1a1a' : '#ffffff');
-            root.style.setProperty('--bg-secondary', isDark ? '#2d2d2d' : '#f5f5f5');
+            // High contrast mód: čistě černobílé pozadí, výrazné okraje, žádné stíny
+            const highContrast = settings.highContrast;
+
+            root.style.setProperty('--bg-primary', isDark ? (highContrast ? '#000000' : '#1a1a1a') : '#ffffff');
+            root.style.setProperty('--bg-secondary', isDark ? (highContrast ? '#0d0d0d' : '#2d2d2d') : (highContrast ? '#f2f2f2' : '#f5f5f5'));
             root.style.setProperty('--text-primary', isDark ? '#ffffff' : '#000000');
-            root.style.setProperty('--text-secondary', isDark ? '#cccccc' : '#666666');
-            root.style.setProperty('--border-color', isDark ? '#444444' : '#e0e0e0');
-            root.style.setProperty('--shadow-color', isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)');
+            root.style.setProperty('--text-secondary', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#cccccc' : '#666666'));
+            root.style.setProperty('--border-color', highContrast ? (isDark ? '#ffffff' : '#000000') : (isDark ? '#444444' : '#e0e0e0'));
+            root.style.setProperty('--shadow-color', highContrast ? 'none' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.1)'));
         }
     }
 
@@ -168,6 +189,12 @@ export class ThemeService {
             console.error('Error detecting system dark mode:', error);
             return false;
         }
+    }
+
+    /** Vrací kompletní sadu CSS tříd motivu ('dark'/'light' + případně 'high-contrast'). */
+    public getThemeClasses(): string {
+        const base = this.getThemeClass();
+        return this.isHighContrastEnabled() ? base + ' high-contrast' : base;
     }
 
     /** Vrací CSS třídu aktuálního motivu ('dark'/'light'). */

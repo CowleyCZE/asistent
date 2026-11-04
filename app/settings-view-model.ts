@@ -204,6 +204,17 @@ export class SettingsViewModel extends Observable {
         this.notifyPropertyChange('currentThemeMode', value);
     }
 
+    /** Vysoký kontrast (přepínač v Nastavení > Vzhled). */
+    get highContrast(): boolean {
+        return this.themeService.isHighContrastEnabled();
+    }
+
+    set highContrast(value: boolean) {
+        this.themeService.setHighContrast(value);
+        this.themeService.applyTheme();
+        this.notifyPropertyChange('highContrast', value);
+    }
+
     // Metody pro správu
     /** Přidá aktuálně zadanou frázi do seznamu aktivačních frází. */
     public addPhrase() {

@@ -149,6 +149,12 @@
                     </DropDown.selectedValue>
                 </DropDown>
                 <Label text="Aktu\u00e1ln\u001d re\u017eim: {{ currentThemeMode }}" class="text-xs text-theme-secondary" />
+
+                <!-- Vysoký kontrast (P3) -->
+                <StackLayout orientation="horizontal" class="space-x-2 mt-2">
+                    <Switch checked="{{ highContrast }}" class="mt-1" accessibilityLabel="Vysoký kontrast" />
+                    <Label text="Vysoký kontrast" class="text-theme-primary" />
+                </StackLayout>
             </StackLayout>
         </StackLayout>
     </ScrollView>

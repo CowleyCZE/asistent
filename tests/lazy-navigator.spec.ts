@@ -1,5 +1,5 @@
 import { Frame } from '@nativescript/core';
-import { LazyNavigator } from '../../app/utils/navigation';
+import { LazyNavigator } from '../app/utils/navigation';
 
 describe('LazyNavigator', () => {
     let navigateMock: jest.Mock;

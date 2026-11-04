@@ -1,10 +1,10 @@
 // Jest setup file
-// Mock @nativescript/core module (celý mock modul, aby zůstal kompatibilní i s budoucími exporty)
-jest.mock('@nativescript/core', () => require('./mocks/nativescript-core.mock'));
+// @nativescript/core je mockován přes moduleNameMapper v jest.config.js
+// (zde nelze volat jest.mock na tentýž modul – vede k rekurzi v resolveru)
 
 // Mock fetch for testing
-if (!global.fetch) {
-    global.fetch = jest.fn();
+if (!(global as any).fetch) {
+    (global as any).fetch = jest.fn();
 }
 
 // Mock console methods to reduce noise in tests

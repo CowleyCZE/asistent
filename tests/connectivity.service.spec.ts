@@ -1,4 +1,4 @@
-import { ConnectivityService } from '../../app/services/connectivity.service';
+import { ConnectivityService } from '../app/services/connectivity.service';
 
 describe('ConnectivityService', () => {
     afterEach(() => {

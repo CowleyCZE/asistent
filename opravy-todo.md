@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (4. běh)
+**Poslední aktualizace:** 4. listopadu 2026 (4. běh, pokračování)
 **Celkový počet úkolů:** 112
 
 ---
@@ -96,8 +96,8 @@
 - [x] Přidat animace pro všechny interakce (commit 2cdcf5e – třída btn-press:active na všech 17 tlačítkách, CSS animace již existovaly)
 - [x] Vytvořit animace utility třídu (commit 2cdcf5e – app/utils/animation.utils.ts: fadeIn/Out, slideIn, pressFeedback, shake, popIn, revealSection)
 - [x] Přidat accessibility labels (commit 2cdcf5e – accessibilityLabel na 24 interaktivních prvcích: tlačítka, switche, slidery, textová pole všech 4 stránek)
-- [ ] Implementovat keyboard navigation
-- [ ] Přidat high contrast mode
+- [x] Implementovat keyboard navigation (commit 00a48cd – app/utils/keyboard-navigation.utils.ts: D-pad/šipky posun fokusu, Enter/Mezerník aktivace; napojeno v main-page.ts)
+- [x] Přidat high contrast mode (commit 00a48cd – highContrast v ThemeService, přepínač v Nastavení > Vzhled, .high-contrast CSS třídy)
 
 ### Funkční vylepšení
 - [ ] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition

@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (2. běh)
+**Poslední aktualizace:** 4. listopadu 2026 (3. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -77,14 +77,14 @@
 - [x] Zapnout noImplicitAny: true (implikováno strict: true)
 - [x] Zapnout strictNullChecks: true (implikováno strict: true)
 - [x] Opravit všechny typové chyby (65 chyb pod strict mode opraveno v commitu b000768; CI krok `npm run typecheck` prošel ✅)
-- [ ] Přidat JSDoc pro všechny veřejné metody
+- [x] Přidat JSDoc pro všechny veřejné metody (dokončeno v commitech 1ee2c17 a 39929f0 – view modely, stránky, utility a všechny služby)
 - [x] Vytvořit constants soubor pro magic strings
-- [ ] Standardizovat naming konvence
+- [x] Standardizovat naming konvence (commit c35b805 – kompletní konvence v README, ověřeno proti stavu kódu)
 
 ### Nové chyby
 - [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
 - [x] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, ověřeno type checkem) #nová-chyba
-- [ ] Opravit unit testy v CI – krok "Run unit tests with coverage" selhává (exit 1) již od starších commitů (#4–#11): assistant.service.spec.ts je zastaralý vůči refaktoringu na CommandProcessor (mockuje taskerService přímo na AssistantService; čeká global.fetch bez timeout/retry wraperu); CI se kvůli tomu nikdy nedostane k Android buildu #nová-chyba
+- [ ] Opravit unit testy v CI – krok "Run unit tests with coverage" selhává (exit 1) již od starších commitů (#4–#11): assistant.service.spec.ts je zastaralý vůči refaktoringu na CommandProcessor (oprava: spec přepsán na constructor injection v e93de43, signatury show* a fetch mock fixovány v e9b5a38; coverage navýšen novým specem command-processor.service.spec.ts) – čeká na ověření zeleného CI běhu #nová-chyba
 
 ---
 

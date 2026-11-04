@@ -10,6 +10,7 @@
     "preview": "ns preview",
     "postinstall": "node ./setup-nativescript.js",
     "test": "jest",
+    "typecheck": "tsc --noEmit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "e2e": "wdio tests/e2e/wdio.conf.js",

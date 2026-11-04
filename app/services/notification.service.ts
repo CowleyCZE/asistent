@@ -125,7 +125,7 @@ export class NotificationService {
         
         // Auto-dismiss after duration
         setTimeout(() => {
-            this.dismiss(notification.id);
+            this.dismiss(fullNotification.id);
         }, fullNotification.duration);
 
         return fullNotification;
@@ -356,3 +356,4 @@ export class NotificationService {
         }
     }
 }
+

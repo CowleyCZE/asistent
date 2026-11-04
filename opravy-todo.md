@@ -1,7 +1,7 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 3. listopadu 2026
-**Celkový počet úkolů:** 110
+**Poslední aktualizace:** 4. listopadu 2026
+**Celkový počet úkolů:** 112
 
 ---
 
@@ -66,20 +66,24 @@
 - [x] Nastavit Appium pro E2E testy
 
 ### Výkon
-- [ ] Optimalizovat MP3 soubory v app/assets/sounds/ (nižší bitrate)
-- [ ] Zvažit použití OGG formátu pro zvuky
+- [x] Optimalizovat MP3 soubory v app/assets/sounds/ (nižší bitrate) — ověřeno: soubory jsou již minimální (79–90 B placeholder soubory), není co optimalizovat
+- [x] Zvažit použití OGG formátu pro zvuky — rozhodnuto: Android (jediná cílová platforma) OGG podporuje; použije se při nahrazení placeholder zvuků reálnými soubory (viz nová chyba níže)
 - [x] Implementovat TTL-based cache cleanup
 - [x] Přidat size-based cache eviction
 - [x] Implementovat lazy loading pro stránky
 
 ### Kódová kvalita
-- [ ] Zapnout strict: true v tsconfig.json
-- [ ] Zapnout noImplicitAny: true
-- [ ] Zapnout strictNullChecks: true
-- [ ] Opravit všechny typové chyby
+- [x] Zapnout strict: true v tsconfig.json (včetně noImplicitAny a strictNullChecks)
+- [x] Zapnout noImplicitAny: true (implikováno strict: true)
+- [x] Zapnout strictNullChecks: true (implikováno strict: true)
+- [ ] Opravit všechny typové chyby (nový CI krok `npm run typecheck` = `tsc --noEmit` ověří; čeká na výsledek CI běhu)
 - [ ] Přidat JSDoc pro všechny veřejné metody
 - [x] Vytvořit constants soubor pro magic strings
 - [ ] Standardizovat naming konvence
+
+### Nové chyby
+- [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
+- [ ] Opravit dismiss() v NotificationService.show(): auto-dismiss používal neexistující id vstupního objektu místo id vytvořené notifikace (opraveno v commitu 4fd0d87, nutno ověřit testy) #nová-chyba
 
 ---
 
@@ -166,10 +170,10 @@
 
 - P0 (Kritické): 10 úkolů
 - P1 (Důležité): 25 úkolů
-- P2 (Střední): 35 úkolů
+- P2 (Střední): 37 úkolů
 - P3 (Nízká): 30 úkolů
 - P4 (Dlouhodobé): 10 úkolů
-- **Celkem: 110 úkolů**
+- **Celkem: 112 úkolů**
 
 ---
 
@@ -184,3 +188,4 @@
 ---
 
 **Soubor vytvořen:** 2. listopadu 2024
+

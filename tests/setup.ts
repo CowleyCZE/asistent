@@ -2,10 +2,8 @@
 // @nativescript/core je mockován přes moduleNameMapper v jest.config.js
 // (zde nelze volat jest.mock na tentýž modul – vede k rekurzi v resolveru)
 
-// Mock fetch for testing
-if (!(global as any).fetch) {
-    (global as any).fetch = jest.fn();
-}
+// Vynutit fetch jako jest mock (Node 18 má nativní fetch, který mocky nepoužívá)
+(global as any).fetch = jest.fn();
 
 // Mock console methods to reduce noise in tests
 const originalConsoleLog = console.log;

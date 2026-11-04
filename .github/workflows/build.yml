@@ -36,7 +36,7 @@ jobs:
 
       - name: Publish test output to job summary
         if: failure()
-        run: tail -n 300 /tmp/test.log >> $GITHUB_STEP_SUMMARY || true
+        run: tail -n 800 /tmp/test.log >> $GITHUB_STEP_SUMMARY || true
 
       - name: Emit failing tests as annotations
         if: failure()
@@ -52,7 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tail -n 200 /tmp/test.log > /tmp/body.md || echo 'test log nenalezen' > /tmp/body.md
+          tail -n 800 /tmp/test.log > /tmp/body.md || echo 'test log nenalezen' > /tmp/body.md
           gh issue create --repo CowleyCZE/asistent \
             --title "CI: unit testy selhaly (commit ${{ github.sha }})" \
             --body-file /tmp/body.md || true
@@ -74,7 +74,8 @@ jobs:
       - name: Install Android dependencies
         run: |
           sdkmanager "platforms;android-33"
-          sdkmanager "build-tools;33.0.2"
+    
+      sdkmanager "build-tools;33.0.2"
           sdkmanager "extras;android;m2repository"
           sdkmanager "extras;google;m2repository"
 

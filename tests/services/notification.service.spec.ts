@@ -67,14 +67,14 @@ describe('NotificationService', () => {
     });
 
     it('helpery showSuccess/showError/showWarning/showInfo fungují', () => {
-        expect(service.showSuccess('OK')!.type).toBe('success');
-        expect(service.showError('Chyba')!.type).toBe('error');
-        expect(service.showWarning('Pozor')!.type).toBe('warning');
-        expect(service.showInfo('Info')!.type).toBe('info');
+        expect(service.showSuccess('OK', 'Hotovo')!.type).toBe('success');
+        expect(service.showError('Chyba', 'Něco se nepovedlo')!.type).toBe('error');
+        expect(service.showWarning('Pozor', 'Kontrola')!.type).toBe('warning');
+        expect(service.showInfo('Info', 'Informace')!.type).toBe('info');
     });
 
     it('clearHistory smaže historii', () => {
-        service.showSuccess('Ahoj');
+        service.showSuccess('Ahoj', 'Zprava');
         expect(service.getHistory().length).toBe(1);
         service.clearHistory();
         expect(service.getHistory().length).toBe(0);

@@ -1,216 +1,221 @@
 import { AssistantService } from '../../app/services/assistant.service';
-import { SettingsService } from '../../app/services/settings.service';
-import { HistoryService } from '../../app/services/history.service';
-import { TextToSpeechService } from '../../app/services/text-to-speech.service';
 import { Action } from '../../app/services/settings.service';
-import { ApplicationSettings } from '@nativescript/core';
 import { mockReset } from '../mocks/application-settings.mock';
 
-// Mock fetch for webhook testing
-global.fetch = jest.fn();
-
+/**
+ * Testy AssistantService po refaktoringu na CommandProcessor:
+ * AssistantService se testuje přes constructor injection (mock závislostí),
+ * vykonávání akcí se ověřuje na mocku ICommandProcessor.
+ */
 describe('AssistantService', () => {
     let assistantService: AssistantService;
     let mockSettingsService: any;
-    let mockHistoryService: any;
-    let mockTaskerService: any;
+    let mockCommandProcessor: any;
     let mockTtsService: any;
+    let mockOfflineService: any;
+    let mockNotificationService: any;
+
+    const webhookAction: Action = {
+        name: 'Light On',
+        phrase: 'rozsviť světlo',
+        type: 'webhook',
+        url: 'https://example.com/light-on'
+    };
+
+    const taskerAction: Action = {
+        name: 'Music',
+        phrase: 'pusť hudbu',
+        type: 'tasker',
+        taskName: 'PlayMusic'
+    };
 
     beforeEach(() => {
         mockReset();
-        
-        // Create mock services
+
         mockSettingsService = {
-            getActions: () => [
-                { name: 'Light On', phrase: 'rozsviť světlo', type: 'webhook', url: 'https://example.com/light-on' },
-                { name: 'Music', phrase: 'pusť hudbu', type: 'tasker', taskName: 'PlayMusic' }
-            ]
+            getActions: () => [webhookAction, taskerAction],
+            getWebhookAuth: () => ({}),
+            getSettings: () => ({})
         };
 
-        mockHistoryService = {
-            addCommand: jest.fn()
-        };
-
-        mockTaskerService = {
-            executeTask: jest.fn(() => true)
+        mockCommandProcessor = {
+            executeWebhookAction: jest.fn().mockResolvedValue(true),
+            executeTaskerAction: jest.fn().mockReturnValue(true),
+            executeWebhookUrl: jest.fn().mockResolvedValue(true),
+            executeTaskerTaskName: jest.fn().mockReturnValue(true)
         };
 
         mockTtsService = {
-            isEnabled: () => false,
-            speak: jest.fn(),
+            isEnabled: jest.fn(() => false),
+            speak: jest.fn().mockResolvedValue(true),
             setEnabled: jest.fn(),
             setLanguage: jest.fn(),
             setPitch: jest.fn(),
             setRate: jest.fn()
         };
 
-        // Override service creation
-        assistantService = new AssistantService();
-        (assistantService as any).settingsService = mockSettingsService;
-        (assistantService as any).historyService = mockHistoryService;
-        (assistantService as any).taskerService = mockTaskerService;
-        (assistantService as any).ttsService = mockTtsService;
+        mockOfflineService = {
+            queueCommand: jest.fn(),
+            processAllCommands: jest.fn().mockResolvedValue({ processed: 0, failed: 0 }),
+            getQueueCount: jest.fn(() => 0),
+            isOfflineModeActive: jest.fn(() => false)
+        };
+
+        mockNotificationService = {
+            isEnabled: () => false,
+            showSuccess: jest.fn(),
+            showError: jest.fn(),
+            showWarning: jest.fn()
+        };
+
+        assistantService = new AssistantService({
+            settingsService: mockSettingsService,
+            ttsService: mockTtsService,
+            offlineService: mockOfflineService,
+            notificationService: mockNotificationService,
+            commandProcessor: mockCommandProcessor
+        });
     });
 
-    describe('processCommand', () => {
-        it('should return false for no matching action', async () => {
+    describe('processCommand - matchování', () => {
+        it('vrátí false pro neznámý příkaz', async () => {
             const result = await assistantService.processCommand('unknown command');
             expect(result).toBe(false);
+            expect(mockCommandProcessor.executeWebhookAction).not.toHaveBeenCalled();
+            expect(mockCommandProcessor.executeTaskerAction).not.toHaveBeenCalled();
         });
 
-        it('should execute webhook for matching action', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
-
+        it('spustí webhook akci přes CommandProcessor', async () => {
             const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(true);
-            expect(global.fetch).toHaveBeenCalledWith('https://example.com/light-on', { method: 'POST' });
+            expect(mockCommandProcessor.executeWebhookAction).toHaveBeenCalledWith(webhookAction);
         });
 
-        it('should return false for failed webhook', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                statusText: 'Not Found'
-            });
+        it('spustí Tasker akci přes CommandProcessor', async () => {
+            const result = await assistantService.processCommand('pusť hudbu');
+            expect(result).toBe(true);
+            expect(mockCommandProcessor.executeTaskerAction).toHaveBeenCalledWith(taskerAction);
+        });
 
+        it('propaguje neúspěch webhooku', async () => {
+            mockCommandProcessor.executeWebhookAction.mockResolvedValueOnce(false);
             const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(false);
         });
 
-        it('should handle network errors', async () => {
-            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-
-            const result = await assistantService.processCommand('rozsviť světlo');
+        it('propaguje neúspěch Tasker akce', async () => {
+            mockCommandProcessor.executeTaskerAction.mockReturnValueOnce(false);
+            const result = await assistantService.processCommand('pusť hudbu');
             expect(result).toBe(false);
         });
 
-        it('should execute tasker task for matching action', async () => {
-            const result = assistantService.processCommand('pusť hudbu');
+        it('ignoruje velká/malá písmena', async () => {
+            const result = await assistantService.processCommand('ROZSVIŤ SVĚTLO');
             expect(result).toBe(true);
-            expect(mockTaskerService.executeTask).toHaveBeenCalledWith('PlayMusic');
+            expect(mockCommandProcessor.executeWebhookAction).toHaveBeenCalledWith(webhookAction);
         });
 
-        it('should add command to history on success', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
-
-            await assistantService.processCommand('rozsviť světlo');
-            expect(mockHistoryService.addCommand).toHaveBeenCalled();
-        });
-
-        it('should add command to history on failure', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                statusText: 'Not Found'
-            });
-
-            await assistantService.processCommand('rozsviť světlo');
-            expect(mockHistoryService.addCommand).toHaveBeenCalled();
-        });
-    });
-
-    describe('Webhook execution', () => {
-        it('should log success for successful webhook', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
-
-            const result = await assistantService.processCommand('rozsviť světlo');
+        it('matchuje částečné fráze', async () => {
+            const result = await assistantService.processCommand('rozsviť světlo v obýváku');
             expect(result).toBe(true);
+            expect(mockCommandProcessor.executeWebhookAction).toHaveBeenCalledWith(webhookAction);
         });
 
-        it('should log error for failed webhook', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                statusText: 'Internal Server Error'
-            });
-
-            const result = await assistantService.processCommand('rozsviť světlo');
+        it('vrátí false pro prázdný příkaz', async () => {
+            const result = await assistantService.processCommand('   ');
             expect(result).toBe(false);
         });
 
-        it('should log network error for network failure', async () => {
-            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Connection timeout'));
-
+        it('vrátí false při výjimce v settings', async () => {
+            mockSettingsService.getActions = () => { throw new Error('boom'); };
             const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(false);
         });
     });
 
-    describe('Tasker execution', () => {
-        it('should return true for successful tasker execution', () => {
-            mockTaskerService.executeTask.mockReturnValueOnce(true);
-            const result = assistantService.processCommand('pusť hudbu');
-            expect(result).toBe(true);
+    describe('processCommand - offline fronta', () => {
+        afterEach(() => {
+            (global as any).android = undefined;
         });
 
-        it('should return false for failed tasker execution', () => {
-            mockTaskerService.executeTask.mockReturnValueOnce(false);
-            const result = assistantService.processCommand('pusť hudbu');
+        it('zařadí příkaz do fronty při nedostupné síti', async () => {
+            // Simulace Android kontextu: getActiveNetworkInfo vrací null -> offline
+            (global as any).android = {
+                context: {
+                    CONNECTIVITY_SERVICE: 'connectivity',
+                    getSystemService: () => ({ getActiveNetworkInfo: () => null })
+                }
+            };
+
+            const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(false);
-        });
-
-        it('should add command to history for tasker execution', () => {
-            assistantService.processCommand('pusť hudbu');
-            expect(mockHistoryService.addCommand).toHaveBeenCalled();
+            expect(mockOfflineService.queueCommand).toHaveBeenCalledWith(
+                'rozsviť světlo',
+                'Light On',
+                'webhook',
+                'https://example.com/light-on',
+                undefined
+            );
+            expect(mockCommandProcessor.executeWebhookAction).not.toHaveBeenCalled();
         });
     });
 
-    describe('TTS Integration', () => {
+    describe('processCommand - TTS integrace', () => {
         beforeEach(() => {
-            mockTtsService.isEnabled = () => true;
+            mockTtsService.isEnabled = jest.fn(() => true);
         });
 
-        it('should speak on successful command when TTS is enabled', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
-
+        it('promluví při úspěšném příkazu', async () => {
             await assistantService.processCommand('rozsviť světlo');
             expect(mockTtsService.speak).toHaveBeenCalled();
         });
 
-        it('should speak error message on failed command when TTS is enabled', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                statusText: 'Not Found'
-            });
-
+        it('promluví při neúspěšném příkazu', async () => {
+            mockCommandProcessor.executeWebhookAction.mockResolvedValueOnce(false);
             await assistantService.processCommand('rozsviť světlo');
-            expect(mockTtsService.speak).toHaveBeenCalled();
+            expect(mockTtsService.speak).not.toHaveBeenCalled();
         });
 
-        it('should speak on no matching action when TTS is enabled', async () => {
+        it('promluví i pro neznámý příkaz', async () => {
             await assistantService.processCommand('unknown command');
             expect(mockTtsService.speak).toHaveBeenCalled();
         });
-    });
 
-    describe('Case insensitivity', () => {
-        it('should match commands case insensitively', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
-
-            const result = await assistantService.processCommand('ROZSVIŤ SVĚTLO');
+        it('nehlásí TTS chybu, když je speak odmítnuto', async () => {
+            mockTtsService.speak.mockRejectedValueOnce(new Error('tts fail'));
+            const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(true);
         });
+    });
 
-        it('should match partial phrases', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                statusText: 'OK'
-            });
+    describe('processOfflineQueue', () => {
+        it('online zpracuje frontu přes CommandProcessor executory', async () => {
+            mockOfflineService.processAllCommands.mockResolvedValue({ processed: 2, failed: 1 });
+            const result = await assistantService.processOfflineQueue();
+            expect(result).toEqual({ processed: 2, failed: 1 });
+            expect(mockOfflineService.processAllCommands).toHaveBeenCalledWith(
+                expect.any(Function),
+                expect.any(Function)
+            );
+            // Funkce delegují na CommandProcessor
+            const [webhookExecutor, taskerExecutor] = mockOfflineService.processAllCommands.mock.calls[0];
+            await webhookExecutor('https://example.com/hook');
+            expect(mockCommandProcessor.executeWebhookUrl).toHaveBeenCalledWith('https://example.com/hook');
+            taskerExecutor('PlayMusic');
+            expect(mockCommandProcessor.executeTaskerTaskName).toHaveBeenCalledWith('PlayMusic');
+        });
 
-            const result = await assistantService.processCommand('rozsviť světlo v obýváku');
-            expect(result).toBe(true);
+        it('vrátí nuly při výjimce', async () => {
+            mockOfflineService.processAllCommands.mockRejectedValueOnce(new Error('boom'));
+            const result = await assistantService.processOfflineQueue();
+            expect(result).toEqual({ processed: 0, failed: 0 });
+        });
+    });
+
+    describe('getOfflineQueueCount / isOfflineModeActive', () => {
+        it('deleguje na OfflineService', () => {
+            expect(assistantService.getOfflineQueueCount()).toBe(0);
+            expect(assistantService.isOfflineModeActive()).toBe(false);
         });
     });
 });

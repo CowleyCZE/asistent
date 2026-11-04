@@ -59,7 +59,7 @@ describe('StatisticsService', () => {
     beforeEach(() => {
         mockReset();
         // Replace the history service with our mock
-        (statisticsService as any) = new StatisticsService();
+        statisticsService = new StatisticsService();
         // We'll test with direct data manipulation
     });
 

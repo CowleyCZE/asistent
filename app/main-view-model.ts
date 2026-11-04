@@ -9,6 +9,13 @@ import { serviceLocator, ServiceTokens } from './services/service-locator';
 import { IAssistantService, ISettingsService, INotificationService } from './services/service-interfaces';
 import { themeService } from './app';
 
+/**
+ * View-model hlavní stránky.
+ *
+ * Řídí celý hlasový tok: detekci aktivační fráze, poslech příkazu,
+ * zpracování přes AssistantService a aktualizaci stavu do UI.
+ * Služby získává přes ServiceLocator (Dependency Injection).
+ */
 export class MainViewModel extends Observable {
     private speechService: SpeechRecognitionService;
     private translatorService: TranslatorService;
@@ -199,6 +206,7 @@ export class MainViewModel extends Observable {
         return themeService;
     }
 
+    /** Přepne poslouchání řeči (start/stop) a přehraje zpětnou vazbu. */
     public async toggleListening() {
         if (!this._hasPermission) {
             await this.checkPermissions();
@@ -223,12 +231,14 @@ export class MainViewModel extends Observable {
         this.isListening = !this.isListening;
     }
 
+    /** Otevře stránku nastavení (lazy loading přes LazyNavigator). */
     public showSettings() {
         // Lazy loading – stránka nastavení se (včetně view-modelu a služeb)
         // načte až při první navigaci
         LazyNavigator.navigate("settings-page");
     }
 
+    /** Zpracuje čekající offline frontu a notifikuje výsledek. */
     public async processOfflineQueue() {
         this.status = "Zpracovávám offline frontu...";
         const result = await this.assistantService.processOfflineQueue();

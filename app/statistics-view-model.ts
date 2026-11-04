@@ -1,6 +1,12 @@
 import { Observable } from '@nativescript/core';
 import { StatisticsService, Statistics, ActionUsage, DailyStats } from './services/statistics.service';
 
+/**
+ * View-model stránky statistik.
+ *
+ * Načítá statistiky ze StatisticsService a poskytuje formátovací
+ * a barevné helpery pro zobrazení v UI.
+ */
 export class StatisticsViewModel extends Observable {
     private statisticsService: StatisticsService;
 
@@ -21,26 +27,32 @@ export class StatisticsViewModel extends Observable {
         }, 100);
     }
 
+    /** Znovu načte statistiky. */
     public refresh() {
         this.loadStatistics();
     }
 
+    /** Naformátuje procento na jeden desetinný míst. */
     public formatPercentage(value: number): string {
         return value.toFixed(1) + '%';
     }
 
+    /** Naformátuje číslo podle českého národního formátu. */
     public formatNumber(value: number): string {
         return value.toLocaleString('cs-CZ');
     }
 
+    /** Vrátí CSS třídu barvy podle míry úspěšnosti. */
     public getStatusColor(rate: number): string {
         return this.statisticsService.getSuccessRateColor(rate);
     }
 
+    /** Naformátuje datum (YYYY-MM-DD) pro zobrazení. */
     public formatDate(dateStr: string): string {
         return this.statisticsService.formatDateForDisplay(dateStr);
     }
 
+    /** Vrátí CSS třídu barvy podle typu akce. */
     public getActionTypeColor(type: string): string {
         switch (type) {
             case 'webhook':
@@ -52,6 +64,7 @@ export class StatisticsViewModel extends Observable {
         }
     }
 
+    /** Vrátí ikonu trendu (↑/↓/→) mezi dvěma hodnotami. */
     public getTrendIcon(previous: number, current: number): string {
         const trend = this.statisticsService.getTrend(previous, current);
         switch (trend) {

@@ -3,6 +3,12 @@ import { HistoryService, CommandHistory, CommandStatus, ActionType, HistoryFilte
 import { knownFolders } from '@nativescript/core';
 import * as fileSystem from '@nativescript/core/file-system';
 
+/**
+ * View-model stránky historie příkazů.
+ *
+ * Poskytuje historii, její filtrování (stav, typ akce, text, datum)
+ * a export do CSV/JSON.
+ */
 export class HistoryViewModel extends Observable {
     private historyService: HistoryService;
 
@@ -42,6 +48,7 @@ export class HistoryViewModel extends Observable {
         this.filteredHistory = [...this.history];
     }
 
+    /** Aplikuje aktuální filtry na historii a aktualizuje filteredHistory. */
     public applyFilters() {
         const filter: HistoryFilter = {
             status: this.selectedStatus !== 'all' ? this.selectedStatus : undefined,
@@ -55,6 +62,7 @@ export class HistoryViewModel extends Observable {
         this.notifyPropertyChange('filteredHistory', this.filteredHistory);
     }
 
+    /** Vyčistí všechny filtry a zobrazí kompletní historii. */
     public clearFilters() {
         this.selectedStatus = 'all';
         this.selectedActionType = 'all';
@@ -64,17 +72,20 @@ export class HistoryViewModel extends Observable {
         this.filteredHistory = [...this.history];
     }
 
+    /** Smaže konkrétní záznam z historie podle id. */
     public deleteEntry(id: string) {
         this.historyService.deleteEntry(id);
         this.loadHistory();
         this.applyFilters();
     }
 
+    /** Smaže celou historii příkazů. */
     public clearAllHistory() {
         this.historyService.clearHistory();
         this.loadHistory();
     }
 
+    /** Exportuje historii do CSV souboru v dokumentech; vrací cestu. */
     public async exportHistory() {
         const csvData = this.historyService.exportHistory();
         const documents = knownFolders.documents();
@@ -85,6 +96,7 @@ export class HistoryViewModel extends Observable {
         return filePath;
     }
 
+    /** Exportuje historii do JSON souboru v dokumentech; vrací cestu. */
     public async exportHistoryJSON() {
         const jsonData = this.historyService.exportHistoryJSON();
         const documents = knownFolders.documents();
@@ -95,6 +107,7 @@ export class HistoryViewModel extends Observable {
         return filePath;
     }
 
+    /** Naformátuje datum do českého národního formátu. */
     public formatDate(date: Date): string {
         return date.toLocaleString('cs-CZ', {
             day: '2-digit',
@@ -106,6 +119,7 @@ export class HistoryViewModel extends Observable {
         });
     }
 
+    /** Vrátí CSS třídu barvy podle stavu příkazu. */
     public getStatusColor(status: CommandStatus): string {
         switch (status) {
             case 'success':
@@ -119,6 +133,7 @@ export class HistoryViewModel extends Observable {
         }
     }
 
+    /** Vrátí textový popisek stavu příkazu. */
     public getStatusText(status: CommandStatus): string {
         switch (status) {
             case 'success':
@@ -132,6 +147,7 @@ export class HistoryViewModel extends Observable {
         }
     }
 
+    /** Vrátí textový popisek typu akce. */
     public getActionTypeText(type: ActionType): string {
         switch (type) {
             case 'webhook':

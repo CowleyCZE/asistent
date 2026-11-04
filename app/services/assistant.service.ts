@@ -70,6 +70,11 @@ export class AssistantService implements IAssistantService {
         });
     }
 
+    /**
+     * Zpracuje hlasový příkaz: sanitizace, matchování fráze, offline fronta
+     * a vykonání přes CommandProcessor (webhook/tasker) + TTS odezva.
+     * @returns true, pokud byla akce úspěšně vykonána.
+     */
     public async processCommand(command: string): Promise<boolean> {
         try {
             // Sanitizace vstupu (odstraňuje řídicí znaky, omezuje délku)
@@ -155,6 +160,10 @@ export class AssistantService implements IAssistantService {
         }
     }
 
+    /**
+     * Zpracuje čekající offline frontu (při obnoveném připojení).
+     * @returns Počet zpracovaných a selhaných příkazů.
+     */
     public async processOfflineQueue(): Promise<{ processed: number; failed: number }> {
         try {
             if (this.isOnline()) {
@@ -169,10 +178,12 @@ export class AssistantService implements IAssistantService {
         return { processed: 0, failed: 0 };
     }
 
+    /** Počet příkazů čekajících v offline frontě. */
     public getOfflineQueueCount(): number {
         return this.offlineService.getQueueCount();
     }
 
+    /** Zjistí, zda je offline režim aktivní (fronta není prázdná). */
     public isOfflineModeActive(): boolean {
         return this.offlineService.isOfflineModeActive();
     }

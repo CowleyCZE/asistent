@@ -5,6 +5,10 @@ import { HistoryViewModel } from './history-view-model';
 // a další navigace používají již existující (cached) instanci.
 let viewModel: HistoryViewModel | null = null;
 
+/**
+ * Obsluha navigace na stránku: vytvoří (lazy) nebo použije cached view-model
+ * a naváže ho na bindingContext stránky.
+ */
 export function navigatingTo(args: EventData) {
     const page = <Page>args.object;
     if (!viewModel) {

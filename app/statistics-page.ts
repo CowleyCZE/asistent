@@ -5,6 +5,10 @@ import { StatisticsViewModel } from './statistics-view-model';
 // a další navigace používají již existující (cached) instanci.
 let viewModel: StatisticsViewModel | null = null;
 
+/**
+ * Obsluha navigace na stránku: vytvoří (lazy) nebo použije cached view-model
+ * a naváže ho na bindingContext stránky.
+ */
 export function navigatingTo(args: EventData) {
     const page = <Page>args.object;
     if (!viewModel) {

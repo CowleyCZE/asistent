@@ -9,18 +9,22 @@ export type LogLevel = 'INFO' | 'SUCCESS' | 'ERROR' | 'NETWORK ERROR';
 export class LoggerService {
     private readonly LOG_FILE: string = 'webhook_log.txt';
 
+    /** Zapíše informační zprávu do logu. */
     public info(message: string): void {
         this.write('INFO', message);
     }
 
+    /** Zapíše zprávu o úspěšné operaci do logu. */
     public success(message: string): void {
         this.write('SUCCESS', message);
     }
 
+    /** Zapíše chybovou zprávu (na stderr i do souboru). */
     public error(message: string): void {
         this.write('ERROR', message, true);
     }
 
+    /** Zapíše síťovou chybu (na stderr i do souboru). */
     public networkError(message: string): void {
         this.write('NETWORK ERROR', message, true);
     }

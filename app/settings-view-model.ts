@@ -3,6 +3,12 @@ import { SettingsService, Action, ActionType } from './services/settings.service
 import { TextToSpeechService } from './services/text-to-speech.service';
 import { ThemeService } from './services/theme.service';
 
+/**
+ * View-model stránky nastavení.
+ *
+ * Spravuje aktivační fráze, akce (webhook/tasker), TTS konfiguraci
+ * a motiv aplikace; změny se okamžitě ukládají přes služby.
+ */
 export class SettingsViewModel extends Observable {
     private settingsService: SettingsService;
     private ttsService: TextToSpeechService;
@@ -199,6 +205,7 @@ export class SettingsViewModel extends Observable {
     }
 
     // Metody pro správu
+    /** Přidá aktuálně zadanou frázi do seznamu aktivačních frází. */
     public addPhrase() {
         if (this.currentPhrase && !this.wakePhrases.includes(this.currentPhrase)) {
             const updatedPhrases = [...this.wakePhrases, this.currentPhrase];
@@ -208,6 +215,7 @@ export class SettingsViewModel extends Observable {
         }
     }
 
+    /** Odebere frázi (args.object.bindingContext) ze seznamu. */
     public removePhrase(args: any) {
         const phraseToRemove = args.object.bindingContext;
         const updatedPhrases = this.wakePhrases.filter(p => p !== phraseToRemove);
@@ -215,6 +223,7 @@ export class SettingsViewModel extends Observable {
         this.wakePhrases = updatedPhrases;
     }
 
+    /** Přidá novou akci z formuláře (webhook s URL / tasker s názvem úlohy). */
     public addAction() {
         const isWebhookValid = this.newActionType === 'webhook' && this.newActionUrl;
         const isTaskerValid = this.newActionType === 'tasker' && this.newActionTaskName;
@@ -238,6 +247,7 @@ export class SettingsViewModel extends Observable {
         }
     }
 
+    /** Odebere akci (args.object.bindingContext) ze seznamu. */
     public removeAction(args: any) {
         const actionToRemove = args.object.bindingContext;
         const index = this.actions.findIndex(a => a === actionToRemove);
@@ -247,6 +257,7 @@ export class SettingsViewModel extends Observable {
         }
     }
 
+    /** Otevře stránku historie příkazů. */
     public showHistory() {
         Frame.topmost().navigate({
             moduleName: "history-page",
@@ -256,6 +267,7 @@ export class SettingsViewModel extends Observable {
         });
     }
 
+    /** Otevře stránku statistik. */
     public showStatistics() {
         Frame.topmost().navigate({
             moduleName: "statistics-page",
@@ -265,12 +277,14 @@ export class SettingsViewModel extends Observable {
         });
     }
 
+    /** Přečte testovací zprávu přes TTS (pokud je povoleno). */
     public testTTS() {
         if (this.ttsEnabled) {
             this.ttsService.speak("Test hlasové zpětné vazby. Tohle je testovací zpráva.");
         }
     }
 
+    /** Přepne mezi světlým a tmavým motivem. */
     public toggleTheme() {
         this.themeService.toggleTheme();
         this.themeService.applyTheme();
@@ -278,6 +292,7 @@ export class SettingsViewModel extends Observable {
         this.notifyPropertyChange('currentThemeMode', this.themeService.getMode());
     }
 
+    /** Nastaví explicitní režim motivu. */
     public setThemeMode(mode: 'light' | 'dark' | 'system') {
         this.currentThemeMode = mode;
     }

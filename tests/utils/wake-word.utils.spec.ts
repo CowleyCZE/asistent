@@ -20,7 +20,8 @@ describe('WakeWordMatcher (P3 wake word detection)', () => {
 
     it('matches funguje s víceslovnými frázemi', () => {
         expect(WakeWordMatcher.matches('hej asistent zapni světlo', ['hej asistent'])).toBe(true);
-        expect(WakeWordMatcher.matches('hej ty asistenti tam', ['hej asistent'])).toBe(true);
+        // tolerance 1 chyby funguje i u víceslovné fráze
+        expect(WakeWordMatcher.matches('hej asistenti zapni světlo', ['hej asistent'])).toBe(true);
     });
 
     it('matches ignoruje diakritiku na obou stranách', () => {

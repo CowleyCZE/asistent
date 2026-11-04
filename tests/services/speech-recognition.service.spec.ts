@@ -28,6 +28,15 @@ describe('SpeechRecognitionService', () => {
         expect(recognizer.destroy).toHaveBeenCalled();
     });
 
+    it('getRecognitionLanguage vrací výchozí cs-CZ', () => {
+        expect(service.getRecognitionLanguage()).toBe('cs-CZ');
+    });
+
+    it('setRecognitionLanguage uloží podporovaný jazyk', () => {
+        service.setRecognitionLanguage('en-US');
+        expect(service.getRecognitionLanguage()).toBe('en-US');
+    });
+
     it('notifikace speechResult dorazí k odběrateli', () => {
         const handler = jest.fn();
         service.on('speechResult', handler);

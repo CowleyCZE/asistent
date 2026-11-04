@@ -123,7 +123,7 @@ export class SpeechRecognitionService extends Observable {
         }
     }
 
-    /** Spustí jednorázové rozpoznávání řeči (cs-CZ). */
+    /** Spustí jednorázové rozpoznávání řeči (jazyk podle nastavení, výchozí cs-CZ). */
     public startListening() {
         if (Application.android && !this.isListening) {
             const intent = new android.speech.RecognizerIntent();

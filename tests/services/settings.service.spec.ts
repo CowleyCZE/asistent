@@ -187,6 +187,34 @@ describe('SettingsService', () => {
         });
     });
 
+    describe('Speech Recognition Language', () => {
+        beforeEach(() => {
+            mockReset();
+            settingsService = new SettingsService();
+        });
+
+        it('should return default speech language cs-CZ', () => {
+            expect(settingsService.getSpeechLanguage()).toBe('cs-CZ');
+        });
+
+        it('should update speech language to supported language', () => {
+            settingsService.updateSpeechLanguage('en-US');
+            expect(settingsService.getSpeechLanguage()).toBe('en-US');
+        });
+
+        it('should reject unsupported language', () => {
+            settingsService.updateSpeechLanguage('fr-FR');
+            expect(settingsService.getSpeechLanguage()).toBe('cs-CZ');
+        });
+
+        it('should list supported recognition languages', () => {
+            expect(SettingsService.SUPPORTED_RECOGNITION_LANGUAGES).toContain('cs-CZ');
+            expect(SettingsService.SUPPORTED_RECOGNITION_LANGUAGES).toContain('en-US');
+            expect(SettingsService.SUPPORTED_RECOGNITION_LANGUAGES).toContain('de-DE');
+            expect(SettingsService.SUPPORTED_RECOGNITION_LANGUAGES).toContain('sk-SK');
+        });
+    });
+
     describe('Migration', () => {
         beforeEach(() => {
             mockReset();

@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (5. běh)
+**Poslední aktualizace:** 4. listopadu 2026 (5. běh, pokračování)
 **Celkový počet úkolů:** 112
 
 ---
@@ -102,7 +102,7 @@
 ### Funkční vylepšení
 - [x] Přidat podporu pro více jazyků (EN, DE, SK) v speech recognition (commity 6482cc9 + 7bda24e – speechLanguage v nastavení, výběr v UI, podporováno cs-CZ/en-US/de-DE/sk-SK, unit testy)
 - [x] Implementovat continuous listening (commit bbd079b – continuousMode ve SpeechRecognitionService, setContinuousListening, auto-restart 300 ms po speechResult, unit testy)
-- [ ] Vylepšit wake word detection
+- [x] Vylepšit wake word detection (commit 6fc9a4a – WakeWordMatcher: normalizace diakritiky, fuzzy shoda po slovech s Levenshtein tolerancí 1 chyby, zpětně kompatibilní podřetězcová shoda, detekce z parciálních výsledků pro rychlejší reakci, 8 unit testů)
 - [x] Přidat automatické zpracování offline queue při obnově připojení
 - [x] Implementovat priority queue pro offline příkazy
 - [ ] Přidat push notifikace (Firebase)
@@ -122,7 +122,7 @@
 - [x] Přidat troubleshooting sekci do README
 - [x] Přidat FAQ do README
 - [ ] Přidat screenshots do README
-- [ ] Generovat API docs z JSDoc
+- [x] Generovat API docs z JSDoc (commit níže – typedoc.json entryPoints app/services + app/utils, npm skript `docs`, výstup docs/api v .gitignore)
 - [x] Přidat příklady použití do dokumentace
 - [x] Přidat architecture overview
 - [x] Dokumentovat design patterns

@@ -1,0 +1,12 @@
+{
+  "entryPoints": [
+    "app/services",
+    "app/utils"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "name": "CZE-asistent API dokumentace",
+  "includeVersion": true
+}

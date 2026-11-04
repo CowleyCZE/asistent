@@ -5,3 +5,6 @@ node_modules
 
 # Jest coverage report
 coverage/
+
+# Generovaná API dokumentace (typedoc)
+docs/api/

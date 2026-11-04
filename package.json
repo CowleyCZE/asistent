@@ -1,7 +1,7 @@
 {
   "name": "cze-asistent",
   "version": "1.0.0",
-  "description": "Hlasov\u00fd asistent pro Android",
+  "description": "Hlasový asistent pro Android",
   "main": "app.ts",
   "scripts": {
     "android": "ns run android",
@@ -15,7 +15,8 @@
     "test:coverage": "jest --coverage",
     "e2e": "wdio tests/e2e/wdio.conf.js",
     "e2e:driver": "appium driver install uiautomator2",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "docs": "typedoc"
   },
   "keywords": [
     "nativescript",
@@ -48,7 +49,8 @@
     "@wdio/mocha-framework": "^8.36.8",
     "@wdio/spec-reporter": "^8.36.8",
     "appium": "^2.5.0",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "typedoc": "^0.23.28"
   },
   "nativescript": {
     "id": "org.nativescript.CZEasistent",

@@ -7,9 +7,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  issues: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,31 +28,11 @@ jobs:
       - name: TypeScript type check (strict)
         run: npm run typecheck
 
-      - name: Run unit tests with coverage
-        run: npm test -- --coverage 2>&1 | tee /tmp/test.log; exit ${PIPESTATUS[0]}
+      - name: Run unit tests
+        run: npm test -- --ci
 
-      - name: Publish test output to job summary
-        if: failure()
-        run: tail -n 800 /tmp/test.log >> $GITHUB_STEP_SUMMARY || true
-
-      - name: Emit failing tests as annotations
-        if: failure()
-        run: |
-          grep -E '✕|✗|●|FAIL ' /tmp/test.log | head -60 | while IFS= read -r line; do
-            line=${line#}
-            echo "::error::${line:0:200}"
-          done
-          true
-
-      - name: Report test failures as issue
-        if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tail -n 800 /tmp/test.log > /tmp/body.md || echo 'test log nenalezen' > /tmp/body.md
-          gh issue create --repo CowleyCZE/asistent \
-            --title "CI: unit testy selhaly (commit ${{ github.sha }})" \
-            --body-file /tmp/body.md || true
+      - name: Coverage check (thresholds)
+        run: npm test -- --coverage --ci
 
       - name: Setup NativeScript
         run: |
@@ -74,8 +51,7 @@ jobs:
       - name: Install Android dependencies
         run: |
           sdkmanager "platforms;android-33"
-    
-      sdkmanager "build-tools;33.0.2"
+          sdkmanager "build-tools;33.0.2"
           sdkmanager "extras;android;m2repository"
           sdkmanager "extras;google;m2repository"
 

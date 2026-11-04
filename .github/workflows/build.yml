@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,6 +37,17 @@ jobs:
       - name: Publish test output to job summary
         if: failure()
         run: tail -n 300 /tmp/test.log >> $GITHUB_STEP_SUMMARY
+
+      - name: Report test failures as issue
+        if: failure()
+        run: |
+          tail -n 200 /tmp/test.log > /tmp/body.md || echo 'test log nenalezen' > /tmp/body.md
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/CowleyCZE/asistent/issues \
+            -d "{\"title\":\"CI: unit testy selhaly (commit ${{ github.sha }})\",\"body\":$(jq -Rs . /tmp/body.md)}"
+          || true
 
       - name: Setup NativeScript
         run: |

@@ -113,7 +113,7 @@ describe('StatisticsService', () => {
             const byAction = (statisticsService as any).calculateByActionStats(testHistory, allActions);
             expect(byAction.length).toBe(2);
 
-            const action1 = byAction.find(a => a.actionName === 'action1');
+            const action1 = byAction.find((a: any) => a.actionName === 'action1');
             expect(action1).toBeDefined();
             expect(action1!.count).toBe(3);
             expect(action1!.successCount).toBe(2);

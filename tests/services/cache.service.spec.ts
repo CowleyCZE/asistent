@@ -113,10 +113,15 @@ describe('CacheService', () => {
 
     it('evictBySize odstraní nejstarší záznamy nad limit', () => {
         // Zápisy přímo do úložiště obejdou automatickou evikci v set()
+        // Pozn.: timestampy musí být reálné (blízko Date.now()) a ttl dost
+        // velké, aby getStats() → cleanupExpired() záznamy nevyhodil jako
+        // expirované. Původní timestamp 1000+i (rok 1970) způsobil, že
+        // cleanupExpired smazal všech 50 zbývajících záznamů (size 0).
+        const now = Date.now();
         for (let i = 0; i < 60; i++) {
             ApplicationSettings.setString(
                 'cache_k' + i,
-                JSON.stringify({ data: i, timestamp: 1000 + i, ttl: 999999999 })
+                JSON.stringify({ data: i, timestamp: now - (100 - i), ttl: 3600000 })
             );
         }
         expect(service.evictBySize()).toBe(10);

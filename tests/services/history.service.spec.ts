@@ -71,15 +71,15 @@ describe('HistoryService', () => {
         });
 
         it('should parse timestamps correctly', () => {
-            const testDate = new Date('2025-01-01T12:00:00.000Z');
-            jest.spyOn(global, 'Date').mockImplementation(() => testDate);
-
+            // Pozn.: historie se serializuje do JSON (timestamp jako ISO string)
+            // a při čtení deserializuje zpět na Date. Mockování global Date
+            // se vyhýbáme – nahradí celý Date konstruktor a rozbije Date.now()
+            // používané v IdGenerator.generate().
             historyService.addCommand('cmd', 'action', 'webhook', 'success');
 
             const history = historyService.getHistory();
             expect(history[0].timestamp).toBeInstanceOf(Date);
-
-            jest.spyOn(global, 'Date').mockRestore();
+            expect(history[0].timestamp.getTime()).toBeLessThanOrEqual(Date.now());
         });
     });
 

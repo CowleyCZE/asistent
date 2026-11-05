@@ -54,7 +54,7 @@
     "webpack": "5.88.2"
   },
   "nativescript": {
-    "id": "org.nativescript.CZEasistent",
+    "id": "org.nativescript.czechvoiceassistant",
     "tns-android": {
       "version": "8.3.0"
     }

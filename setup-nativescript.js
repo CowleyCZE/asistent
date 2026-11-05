@@ -16,6 +16,8 @@ directories.forEach(dir => {
 // Vytvoření potřebných konfiguračních souborů
 const androidManifest = `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- INTERNET je nutný pro ns preview (synchronizace bundlu) i pro webhooky -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:name="com.tns.NativeScriptApplication"

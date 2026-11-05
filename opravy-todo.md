@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (6. běh)
+**Poslední aktualizace:** 5. listopadu 2026 (7. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -118,9 +118,9 @@
 - [x] Přidat moderní UI komponenty (commit 04452b3 – app.css: card, card-elevated, chip, chip-primary, badge, btn/btn-primary/secondary/success/danger/ghost, input, divider, list-item, fab; motiv-aware přes CSS proměnné)
 - [x] Vylepšit barevné schéma (commit 04452b3 – paleta slate/indigo: světlé i tmavé schéma, sémantické tokeny --success/--danger/--warning/--info, notifikace používají sémantické barvy)
 - [x] Přidat ikony pro akce (commity 04452b3 + 2629acd – unicode ikony na tlačítkách: 🎤/⏹️ Start/Stop, ⚙️ Nastavení/Zpracovat, ➕ Přidat, 🗑️ Odstranit, 🕘 Historie, 📊 Statistiky, 🔊 Test TTS, ⚠️ Offline, 📝/🌐 popisky)
-- [ ] Implementovat Material Design
+- [x] Implementovat Material Design (ověřeno 7. běh: app.css obsahuje kompletní Material Design 3 vrstvu – elevation úrovně 1–5, shape scale pro corner radius, typografická škála MD3, ripple state layery na tlačítkách, MD3 komponenty: cards/chips/FAB/segmented; aplikováno na všechny stávající komponenty)
 - [x] Přidat světlé/tmavé téma varianty (ověřeno 5. 11. 2026: ThemeService podporuje light/dark/system s detekcí systémového režimu, .dark CSS proměnné v app.css, výběr režimu v Nastavení > Vzhled + přepínač vysokého kontrastu)
-- [ ] Implementovat custom téma (částečně: ThemeService API setPrimaryColor/setAccentColor existuje, ale chybí UI výběr barvy a aplikace vlastních barev v NativeScript runtime – mimo DOM cestu se barvy na view neaplikují)
+- [x] Implementovat custom téma (dokončeno 7. běh: vzorník barev (ThemeService.COLOR_PALETTE) s výběrem primární/akcentové barvy v Nastavení > Vzhled, setPrimaryColor/setAccentColor s perzistencí, aplikace vlastních barev v NativeScript runtime přes Page.addCss – applyToPage voláno v navigatingTo všech stránek; unit testy custom-colors.spec.ts)
 
 ### Dokumentace
 - [x] Přidat installation guide do README
@@ -141,7 +141,7 @@
 
 ### Nové integrace
 - [ ] Home Assistant integrace
-- [ ] IFTTT integrace
+- [x] IFTTT integrace (7. běh: nový typ akce 'ifttt' – CommandProcessor.executeIftttAction volá Maker Webhooks URL https://maker.ifttt.com/trigger/{event}/with/key/{key} s POST + JSON hodnotami value1–3, retry/backoff, timeout, cache, historie, notifikace, TTS; validace event/klíče (Validators.IFTTT_TOKEN_PATTERN); výběr typu a pole event/klíč v Nastavení > Akce; dispatch v AssistantService; ICommandProcessor rozšířen; 6 unit testů)
 - [ ] Google Assistant integrace
 - [ ] Alexa integrace
 - [ ] IoT platform integrace
@@ -195,4 +195,3 @@
 ---
 
 **Soubor vytvořen:** 2. listopadu 2024
-

@@ -2,7 +2,7 @@ import { ApplicationSettings } from '@nativescript/core';
 import { StorageKeys } from '../utils/constants';
 import { Validators, ValidationResult } from '../utils/validation';
 
-export type ActionType = 'webhook' | 'tasker';
+export type ActionType = 'webhook' | 'tasker' | 'ifttt';
 
 export interface Action {
     name: string;
@@ -10,6 +10,8 @@ export interface Action {
     type: ActionType;
     url?: string; // Pro webhooky
     taskName?: string; // Pro Tasker
+    iftttEvent?: string; // Název události pro IFTTT Maker Webhooks
+    iftttKey?: string; // Klíč IFTTT Maker Webhooks
 }
 
 export interface WebhookAuth {

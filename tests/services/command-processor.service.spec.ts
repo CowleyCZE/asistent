@@ -3,8 +3,8 @@ import { Action } from '../../app/services/settings.service';
 
 /**
  * Testy CommandProcessoru (constructor injection – všechny závislosti mockované).
- * Webhooky se testují přes global.fetch (mock ze setup.ts), retry s backoff
- * se projevuje reálným zpožděním u selhávajících síťových testů.
+ * Webhooky a IFTTT se testují přes global.fetch (mock ze setup.ts), retry
+ * s backoff se projevuje reálným zpožděním u selhávajících síťových testů.
  */
 describe('CommandProcessor', () => {
     let processor: CommandProcessor;
@@ -28,6 +28,14 @@ describe('CommandProcessor', () => {
         phrase: 'pusť hudbu',
         type: 'tasker',
         taskName: 'PlayMusic'
+    };
+
+    const iftttAction: Action = {
+        name: 'Kamera',
+        phrase: 'zapni kameru',
+        type: 'ifttt',
+        iftttEvent: 'camera_on',
+        iftttKey: 'abc123XYZ_-key'
     };
 
     const createProcessor = () => new CommandProcessor({
@@ -105,6 +113,82 @@ describe('CommandProcessor', () => {
             expect(mockLogger.error).toHaveBeenCalled();
             expect(mockTtsService.speak).toHaveBeenCalled();
         });
+    });
+
+    describe('executeIftttAction', () => {
+        it('vrátí false, když akce nemá událost nebo klíč', async () => {
+            const result = await processor.executeIftttAction({ ...iftttAction, iftttEvent: undefined });
+            expect(result).toBe(false);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'error', 'Chybí název IFTTT události nebo klíč'
+            );
+        });
+
+        it('odmítne neplatný název události (speciální znaky)', async () => {
+            const result = await processor.executeIftttAction({ ...iftttAction, iftttEvent: 'bad event!' });
+            expect(result).toBe(false);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'error', 'Neplatný název IFTTT události nebo klíč'
+            );
+            expect(mockLogger.error).toHaveBeenCalled();
+        });
+
+        it('použije cache, pokud je IFTTT odpověď cached', async () => {
+            mockCacheService.getWebhookCache = jest.fn(() => ({ status: 200, timestamp: Date.now(), ttl: 300000 }));
+            const result = await processor.executeIftttAction(iftttAction);
+            expect(result).toBe(true);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'success'
+            );
+        });
+
+        it('úspěšně spustí IFTTT událost přes Maker Webhooks a uloží odpověď do cache', async () => {
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
+            const result = await processor.executeIftttAction(iftttAction);
+            expect(result).toBe(true);
+            const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+            expect(url).toBe('https://maker.ifttt.com/trigger/camera_on/with/key/abc123XYZ_-key');
+            expect(options.method).toBe('POST');
+            expect(options.headers['Content-Type']).toBe('application/json');
+            const body = JSON.parse(options.body);
+            expect(body.value1).toBe('zapni kameru');
+            expect(body.value2).toBe('Kamera');
+            expect(mockCacheService.setWebhookCache).toHaveBeenCalledWith(
+                'https://maker.ifttt.com/trigger/camera_on/with/key/abc123XYZ_-key',
+                expect.objectContaining({ status: 200, statusText: 'OK' }),
+                300000
+            );
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'success'
+            );
+            expect(mockLogger.success).toHaveBeenCalled();
+        });
+
+        it('zaznamená HTTP chybu IFTTT události', async () => {
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 403, statusText: 'Forbidden' });
+            const result = await processor.executeIftttAction(iftttAction);
+            expect(result).toBe(false);
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'error', 'Forbidden'
+            );
+            expect(mockLogger.error).toHaveBeenCalled();
+        });
+
+        it('zaznamená síťovou chybu jako network_error (retry s backoff)', async () => {
+            (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+            const result = await processor.executeIftttAction(iftttAction);
+            expect(result).toBe(false);
+            // retry: 1. pokus + 2 opakování
+            expect(global.fetch).toHaveBeenCalledTimes(3);
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'zapni kameru', 'Kamera', 'ifttt', 'network_error',
+                'network down'
+            );
+            expect(mockLogger.networkError).toHaveBeenCalled();
+        }, 15000);
     });
 
     describe('executeWebhookAction', () => {

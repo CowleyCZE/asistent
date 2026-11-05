@@ -65,6 +65,8 @@ export interface ICommandProcessor {
     executeWebhookAction(action: Action): Promise<boolean>;
     /** Spustí Tasker akci (historie, notifikace). */
     executeTaskerAction(action: Action): boolean;
+    /** Spustí IFTTT událost přes Maker Webhooks (cache, historie, notifikace). */
+    executeIftttAction(action: Action): Promise<boolean>;
     /** Zavolá webhook URL s autentizací (offline fronta). */
     executeWebhookUrl(url: string): Promise<boolean>;
     /** Spustí Tasker úlohu podle názvu (offline fronta). */

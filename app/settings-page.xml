@@ -59,11 +59,12 @@
                 <TextField text="{{ newActionPhrase }}" hint="Spouštěcí fráze (např. rozsviť světlo)" class="p-2 bg-white rounded text-gray-800" />
 
                 <!-- Přepínač typu akce -->
-                <SegmentedBar selectedIndex="{{ newActionType === 'webhook' ? 0 : 1 }}"
-                              tap="{{ (args) => { newActionType = args.object.selectedIndex === 0 ? 'webhook' : 'tasker' } }}"
+                <SegmentedBar selectedIndex="{{ newActionType === 'webhook' ? 0 : (newActionType === 'tasker' ? 1 : 2) }}"
+                              tap="{{ (args) => { newActionType = args.object.selectedIndex === 0 ? 'webhook' : (args.object.selectedIndex === 1 ? 'tasker' : 'ifttt') } }}"
                               class="mt-2">
                     <SegmentedBarItem title="Webhook" />
                     <SegmentedBarItem title="Tasker" />
+                    <SegmentedBarItem title="IFTTT" />
                 </SegmentedBar>
 
                 <!-- Pole pro URL (viditelné jen pro webhook) -->
@@ -74,6 +75,14 @@
                 <!-- Pole pro název úlohy (viditelné jen pro Tasker) -->
                 <TextField text="{{ newActionTaskName }}" hint="Název úlohy v Taskeru" autocapitalizationType="none"
                            visibility="{{ newActionType === 'tasker' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+
+                <!-- Pole pro IFTTT (viditelná jen pro IFTTT) -->
+                <TextField text="{{ newActionIftttEvent }}" hint="Název IFTTT události (např. light_on)" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'ifttt' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+                <TextField text="{{ newActionIftttKey }}" hint="Klíč Maker Webhooks (Settings > Services)" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'ifttt' ? 'visible' : 'collapsed' }}"
                            class="p-2 bg-white rounded mt-1 text-gray-800" />
 
                 <Button text="➕ Přidat akci" tap="{{ addAction }}" accessibilityLabel="Přidat novou akci" class="mt-2 bg-blue-500 text-white font-bold rounded-lg transition-normal btn-press" />
@@ -90,7 +99,7 @@
 
                         <Label row="1" col="0" text="{{ phrase }}" class="text-sm text-theme-secondary mt-1" />
 
-                        <Label row="2" col="0" text="{{ type === 'webhook' ? url : taskName }}"
+                        <Label row="2" col="0" text="{{ type === 'webhook' ? url : (type === 'ifttt' ? iftttEvent : taskName) }}"
                                class="text-xs text-blue-400 mt-1" textWrap="true" />
 
                         <Button row="0" rowspan="3" col="1" text="🗑️ Odstranit" tap="{{ $parent.removeAction }}" accessibilityLabel="Odstranit akci"

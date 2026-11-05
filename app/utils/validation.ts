@@ -16,6 +16,8 @@ export interface ActionLike {
     type?: string;
     url?: string;
     taskName?: string;
+    iftttEvent?: string;
+    iftttKey?: string;
 }
 
 /** Limity textových polí */
@@ -26,7 +28,9 @@ export const Limits = {
     PHRASE_MIN: 3,
     URL_MAX: 2048,
     TASK_NAME_MAX: 64,
-    COMMAND_MAX: 500
+    COMMAND_MAX: 500,
+    IFTTT_EVENT_MAX: 64,
+    IFTTT_KEY_MAX: 128
 } as const;
 
 export class Validators {
@@ -36,6 +40,13 @@ export class Validators {
      */
     public static readonly WEBHOOK_URL_PATTERN =
         /^https:\/\/[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(:\d{1,5})?(\/[^\s"'<>\\]*)?$/;
+
+    /**
+     * Regex pro IFTTT Maker Webhooks - název události i klíč
+     * smí obsahovat jen alfanumerické znaky, pomlčku a podtržítko
+     * (bez mezer a speciálních znaků, aby nešlo manipulovat URL).
+     */
+    public static readonly IFTTT_TOKEN_PATTERN = /^[A-Za-z0-9_-]+$/;
 
     /** Validuje webhook URL (HTTPS, formát, délka). */
     public static isValidWebhookUrl(url: string | undefined | null): boolean {
@@ -63,7 +74,7 @@ export class Validators {
             .slice(0, maxLength);
     }
 
-    /** Zvaliduje a sanitisuje akci (název, fráze, URL/taskName podle typu). */
+    /** Zvaliduje a sanitisuje akci (název, fráze, URL/taskName/ifttt pole podle typu). */
     public static validateAction(action: ActionLike): { action: ActionLike; result: ValidationResult } {
         const errors: string[] = [];
 
@@ -80,6 +91,8 @@ export class Validators {
         const type = action?.type;
         let url: string | undefined;
         let taskName: string | undefined;
+        let iftttEvent: string | undefined;
+        let iftttKey: string | undefined;
 
         if (type === 'webhook') {
             url = Validators.sanitizeText(action?.url, Limits.URL_MAX);
@@ -91,12 +104,21 @@ export class Validators {
             if (taskName.length === 0) {
                 errors.push('Název Tasker úlohy je povinný.');
             }
+        } else if (type === 'ifttt') {
+            iftttEvent = Validators.sanitizeText(action?.iftttEvent, Limits.IFTTT_EVENT_MAX);
+            if (!Validators.IFTTT_TOKEN_PATTERN.test(iftttEvent)) {
+                errors.push('Název IFTTT události je povinný (alfanumerické znaky, - a _).');
+            }
+            iftttKey = Validators.sanitizeText(action?.iftttKey, Limits.IFTTT_KEY_MAX);
+            if (!Validators.IFTTT_TOKEN_PATTERN.test(iftttKey)) {
+                errors.push('Klíč IFTTT (Maker Webhooks) je povinný (alfanumerické znaky, - a _).');
+            }
         } else {
-            errors.push('Typ akce musí být "webhook" nebo "tasker".');
+            errors.push('Typ akce musí být "webhook", "tasker" nebo "ifttt".');
         }
 
         return {
-            action: { name, phrase, type, url, taskName },
+            action: { name, phrase, type, url, taskName, iftttEvent, iftttKey },
             result: { valid: errors.length === 0, errors }
         };
     }

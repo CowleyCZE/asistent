@@ -26,6 +26,8 @@ export class SettingsViewModel extends Observable {
     private _newActionPhrase: string = '';
     private _newActionUrl: string = '';
     private _newActionTaskName: string = '';
+    private _newActionIftttEvent: string = '';
+    private _newActionIftttKey: string = '';
     private _newActionType: ActionType = 'webhook'; // Výchozí typ
 
     // TTS vlastnosti
@@ -144,6 +146,18 @@ export class SettingsViewModel extends Observable {
     set newActionTaskName(value: string) {
         this._newActionTaskName = value;
         this.notifyPropertyChange('newActionTaskName', value);
+    }
+
+    get newActionIftttEvent(): string { return this._newActionIftttEvent; }
+    set newActionIftttEvent(value: string) {
+        this._newActionIftttEvent = value;
+        this.notifyPropertyChange('newActionIftttEvent', value);
+    }
+
+    get newActionIftttKey(): string { return this._newActionIftttKey; }
+    set newActionIftttKey(value: string) {
+        this._newActionIftttKey = value;
+        this.notifyPropertyChange('newActionIftttKey', value);
     }
 
     get newActionType(): ActionType { return this._newActionType; }
@@ -300,18 +314,21 @@ export class SettingsViewModel extends Observable {
         this.wakePhrases = updatedPhrases;
     }
 
-    /** Přidá novou akci z formuláře (webhook s URL / tasker s názvem úlohy). */
+    /** Přidá novou akci z formuláře (webhook s URL / tasker s názvem úlohy / ifttt s událostí a klíčem). */
     public addAction() {
         const isWebhookValid = this.newActionType === 'webhook' && this.newActionUrl;
         const isTaskerValid = this.newActionType === 'tasker' && this.newActionTaskName;
+        const isIftttValid = this.newActionType === 'ifttt' && this.newActionIftttEvent && this.newActionIftttKey;
 
-        if (this.newActionName && this.newActionPhrase && (isWebhookValid || isTaskerValid)) {
+        if (this.newActionName && this.newActionPhrase && (isWebhookValid || isTaskerValid || isIftttValid)) {
             const newAction: Action = {
                 name: this.newActionName,
                 phrase: this.newActionPhrase,
                 type: this.newActionType,
                 url: this.newActionType === 'webhook' ? this.newActionUrl : undefined,
                 taskName: this.newActionType === 'tasker' ? this.newActionTaskName : undefined,
+                iftttEvent: this.newActionType === 'ifttt' ? this.newActionIftttEvent : undefined,
+                iftttKey: this.newActionType === 'ifttt' ? this.newActionIftttKey : undefined,
             };
             this.settingsService.addAction(newAction);
             this.actions = [...this.settingsService.getActions()];
@@ -321,6 +338,8 @@ export class SettingsViewModel extends Observable {
             this.newActionPhrase = '';
             this.newActionUrl = '';
             this.newActionTaskName = '';
+            this.newActionIftttEvent = '';
+            this.newActionIftttKey = '';
         }
     }
 
@@ -374,3 +393,4 @@ export class SettingsViewModel extends Observable {
         this.currentThemeMode = mode;
     }
 }
+

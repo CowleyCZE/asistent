@@ -72,7 +72,7 @@ export class AssistantService implements IAssistantService {
 
     /**
      * Zpracuje hlasový příkaz: sanitizace, matchování fráze, offline fronta
-     * a vykonání přes CommandProcessor (webhook/tasker) + TTS odezva.
+     * a vykonání přes CommandProcessor (webhook/tasker/ifttt) + TTS odezva.
      * @returns true, pokud byla akce úspěšně vykonána.
      */
     public async processCommand(command: string): Promise<boolean> {
@@ -121,6 +121,12 @@ export class AssistantService implements IAssistantService {
                 return success;
             } else if (matchedAction.type === 'tasker') {
                 const success = this.commandProcessor.executeTaskerAction(matchedAction);
+                if (success) {
+                    await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
+                }
+                return success;
+            } else if (matchedAction.type === 'ifttt') {
+                const success = await this.commandProcessor.executeIftttAction(matchedAction);
                 if (success) {
                     await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
                 }

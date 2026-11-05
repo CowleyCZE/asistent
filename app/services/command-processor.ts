@@ -1,5 +1,5 @@
 /**
- * CommandProcessor - zpracovává konkrétní typy akcí (webhook, tasker).
+ * CommandProcessor - zpracovává konkrétní typy akcí (webhook, tasker, ifttt).
  * Vyčleněno z AssistantService pro menší a testovatelnější třídy.
  */
 import { Action, WebhookAuth, SettingsService } from './settings.service';
@@ -39,6 +39,10 @@ export class CommandProcessor implements ICommandProcessor {
     private readonly REQUEST_TIMEOUT_MS = 15000;
     /** Počet opakování při selhání webhooku. */
     private readonly WEBHOOK_RETRIES = 2;
+    /** Základní URL IFTTT Maker Webhooks služby. */
+    private readonly IFTTT_MAKER_BASE = 'https://maker.ifttt.com/trigger';
+    /** TTL cache úspěšné IFTTT odpovědi (ms). */
+    private readonly IFTTT_CACHE_TTL_MS = 300000;
 
     private settingsService: ISettingsService;
     private taskerService: ITaskerService;
@@ -104,6 +108,141 @@ export class CommandProcessor implements ICommandProcessor {
             }
         }
         return success;
+    }
+
+    /**
+     * Spustí IFTTT událost přes Maker Webhooks
+     * (https://maker.ifttt.com/trigger/{event}/with/key/{key}).
+     * Zahrnuje cache, historii, notifikace a TTS odezvu.
+     */
+    public async executeIftttAction(action: Action): Promise<boolean> {
+        const event = action?.iftttEvent;
+        const key = action?.iftttKey;
+
+        // Null check: bez události ani klíče nelze IFTTT zavolat
+        if (!event || !key) {
+            console.error(`IFTTT akce "${action?.name ?? 'neznámá'}" nemá nastavenou událost nebo klíč.`);
+            this.historyService.addCommand(
+                action?.phrase ?? '',
+                action?.name ?? 'neznámá akce',
+                'ifttt',
+                'error',
+                'Chybí název IFTTT události nebo klíč'
+            );
+            return false;
+        }
+
+        if (!Validators.IFTTT_TOKEN_PATTERN.test(event) || !Validators.IFTTT_TOKEN_PATTERN.test(key)) {
+            console.error(`Neplatný název události nebo klíč IFTTT akce "${action.name}".`);
+            this.logger.error(`Neplatný název události/klíč IFTTT: ${action.name}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'ifttt',
+                'error',
+                'Neplatný název IFTTT události nebo klíč'
+            );
+            return false;
+        }
+
+        const url = `${this.IFTTT_MAKER_BASE}/${encodeURIComponent(event)}/with/key/${encodeURIComponent(key)}`;
+        console.log(`Příkaz nalezen: "${action.name}". Spouštím IFTTT událost: ${event}`);
+
+        // Check cache first (stejné chování jako webhooky)
+        const cachedResponse = this.cacheService.getWebhookCache(url);
+        if (cachedResponse) {
+            console.log(`Using cached response for IFTTT event ${event}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'ifttt',
+                'success'
+            );
+            return true;
+        }
+
+        try {
+            const fetchOptions: RequestInit = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    value1: action.phrase,
+                    value2: action.name,
+                    value3: new Date().toISOString()
+                })
+            };
+
+            // fetch s timeoutem a retry s exponential backoff
+            const response = await retryWithBackoff(
+                () => fetchWithTimeout(url, fetchOptions, this.REQUEST_TIMEOUT_MS),
+                { retries: this.WEBHOOK_RETRIES, baseDelayMs: 1000 }
+            );
+
+            if (response.ok) {
+                console.log(`IFTTT událost ${event} akce ${action.name} úspěšně spuštěna.`);
+                this.logger.success(`IFTTT ${action.name} - ${event}`);
+                this.historyService.addCommand(
+                    action.phrase,
+                    action.name,
+                    'ifttt',
+                    'success'
+                );
+
+                // Cache successful response (5 minut)
+                this.cacheService.setWebhookCache(url, {
+                    status: response.status,
+                    statusText: response.statusText
+                }, this.IFTTT_CACHE_TTL_MS);
+
+                if (this.notificationService.isEnabled()) {
+                    this.notificationService.showSuccess(
+                        'Úspěch',
+                        `IFTTT událost ${action.name} byla úspěšně spuštěna.`
+                    );
+                }
+
+                return true;
+            }
+
+            const statusText = response.statusText ?? 'neznámá chyba';
+            console.error(`Chyba při spouštění IFTTT události ${event}: ${statusText}`);
+            this.logger.error(`IFTTT ${action.name} - ${statusText}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'ifttt',
+                'error',
+                statusText
+            );
+
+            if (this.notificationService.isEnabled()) {
+                this.notificationService.showError(
+                    'Chyba IFTTT',
+                    `Nepodařilo se spustit IFTTT událost ${action.name}: ${statusText}`
+                );
+            }
+
+            return false;
+        } catch (error) {
+            const message = ErrorHandler.handle(`IFTTT ${action.name}`, error);
+            this.logger.networkError(`IFTTT ${action.name} - ${message}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'ifttt',
+                'network_error',
+                message
+            );
+
+            if (this.notificationService.isEnabled()) {
+                this.notificationService.showError(
+                    'Síťová chyba',
+                    `Chyba sítě při spouštění IFTTT události ${action.name}`
+                );
+            }
+
+            return false;
+        }
     }
 
     /** Spustí webhook definovaný akcí (cache, historie, notifikace, log). */

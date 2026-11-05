@@ -152,17 +152,16 @@ describe('CommandProcessor', () => {
             expect(mockLogger.error).toHaveBeenCalled();
         });
 
-        it('použije cache, pokud je IFTTT odpověď cached', async () => {
+        it('ignoruje cache a vždy skutečně zavolá IFTTT (POST akce se necachují)', async () => {
             mockCacheService.getWebhookCache = jest.fn(() => ({ status: 200, timestamp: Date.now(), ttl: 300000 }));
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
             const result = await processor.executeIftttAction(iftttAction);
             expect(result).toBe(true);
-            expect(global.fetch).not.toHaveBeenCalled();
-            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
-                'zapni kameru', 'Kamera', 'ifttt', 'success'
-            );
+            expect(mockCacheService.getWebhookCache).not.toHaveBeenCalled();
+            expect(global.fetch).toHaveBeenCalled();
         });
 
-        it('úspěšně spustí IFTTT událost přes Maker Webhooks a uloží odpověď do cache', async () => {
+        it('úspěšně spustí IFTTT událost přes Maker Webhooks', async () => {
             (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
             const result = await processor.executeIftttAction(iftttAction);
             expect(result).toBe(true);
@@ -173,11 +172,7 @@ describe('CommandProcessor', () => {
             const body = JSON.parse(options.body);
             expect(body.value1).toBe('zapni kameru');
             expect(body.value2).toBe('Kamera');
-            expect(mockCacheService.setWebhookCache).toHaveBeenCalledWith(
-                'https://maker.ifttt.com/trigger/camera_on/with/key/abc123XYZ_-key',
-                expect.objectContaining({ status: 200, statusText: 'OK' }),
-                300000
-            );
+            expect(mockCacheService.setWebhookCache).not.toHaveBeenCalled();
             expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
                 'zapni kameru', 'Kamera', 'ifttt', 'success'
             );
@@ -230,14 +225,13 @@ describe('CommandProcessor', () => {
             expect(mockLogger.error).toHaveBeenCalled();
         });
 
-        it('použije cache, pokud je odpověď služby cached', async () => {
+        it('ignoruje cache a vždy skutečně zavolá HA službu (POST akce se necachují)', async () => {
             mockCacheService.getWebhookCache = jest.fn(() => ({ status: 200, timestamp: Date.now(), ttl: 300000 }));
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
             const result = await processor.executeHomeAssistantAction(homeAssistantAction);
             expect(result).toBe(true);
-            expect(global.fetch).not.toHaveBeenCalled();
-            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
-                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'success'
-            );
+            expect(mockCacheService.getWebhookCache).not.toHaveBeenCalled();
+            expect(global.fetch).toHaveBeenCalled();
         });
 
         it('úspěšně zavolá HA REST API s Bearer tokenem a entity_id', async () => {
@@ -249,11 +243,7 @@ describe('CommandProcessor', () => {
             expect(options.method).toBe('POST');
             expect(options.headers['Authorization']).toBe('Bearer longlivedtoken123');
             expect(JSON.parse(options.body).entity_id).toBe('light.obyvak');
-            expect(mockCacheService.setWebhookCache).toHaveBeenCalledWith(
-                'https://ha.example.com/api/services/light/turn_on:light.obyvak',
-                expect.objectContaining({ status: 200, statusText: 'OK' }),
-                300000
-            );
+            expect(mockCacheService.setWebhookCache).not.toHaveBeenCalled();
             expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
                 'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'success'
             );
@@ -322,13 +312,15 @@ describe('CommandProcessor', () => {
             );
         });
 
-        it('použije cache, pokud je odpověď webhooku cached', async () => {
+        it('ignoruje cache a vždy skutečně zavolá webhook (POST akce se necachují)', async () => {
             mockCacheService.getWebhookCache = jest.fn(() => ({ url: 'https://example.com/light-on', response: {}, timestamp: Date.now(), ttl: 300000 }));
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
             const result = await processor.executeWebhookAction(webhookAction);
             expect(result).toBe(true);
-            expect(global.fetch).not.toHaveBeenCalled();
-            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
-                'rozsviť světlo', 'Light On', 'webhook', 'success'
+            expect(mockCacheService.getWebhookCache).not.toHaveBeenCalled();
+            expect(global.fetch).toHaveBeenCalledWith(
+                'https://example.com/light-on',
+                expect.objectContaining({ method: 'POST' })
             );
         });
 
@@ -342,7 +334,7 @@ describe('CommandProcessor', () => {
             expect(mockLogger.error).toHaveBeenCalled();
         });
 
-        it('úspěšně zavolá webhook a uloží odpověď do cache', async () => {
+        it('úspěšně zavolá webhook (bez cache odpovědi)', async () => {
             (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
             const result = await processor.executeWebhookAction(webhookAction);
             expect(result).toBe(true);
@@ -350,11 +342,7 @@ describe('CommandProcessor', () => {
                 'https://example.com/light-on',
                 expect.objectContaining({ method: 'POST' })
             );
-            expect(mockCacheService.setWebhookCache).toHaveBeenCalledWith(
-                'https://example.com/light-on',
-                expect.objectContaining({ status: 200, statusText: 'OK' }),
-                300000
-            );
+            expect(mockCacheService.setWebhookCache).not.toHaveBeenCalled();
             expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
                 'rozsviť světlo', 'Light On', 'webhook', 'success'
             );
@@ -424,3 +412,4 @@ describe('CommandProcessor', () => {
         });
     });
 });
+

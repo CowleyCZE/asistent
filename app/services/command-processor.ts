@@ -41,8 +41,6 @@ export class CommandProcessor implements ICommandProcessor {
     private readonly WEBHOOK_RETRIES = 2;
     /** Základní URL IFTTT Maker Webhooks služby. */
     private readonly IFTTT_MAKER_BASE = 'https://maker.ifttt.com/trigger';
-    /** TTL cache úspěšné IFTTT odpovědi (ms). */
-    private readonly IFTTT_CACHE_TTL_MS = 300000;
 
     private settingsService: ISettingsService;
     private taskerService: ITaskerService;
@@ -113,7 +111,11 @@ export class CommandProcessor implements ICommandProcessor {
     /**
      * Spustí IFTTT událost přes Maker Webhooks
      * (https://maker.ifttt.com/trigger/{event}/with/key/{key}).
-     * Zahrnuje cache, historii, notifikace a TTS odezvu.
+     * Zahrnuje historii, notifikace a TTS odezvu.
+     *
+     * POZOR: Odpovědi se záměrně NEcachují – jde o POST trigger,
+     * který spouští akci. Cache úspěšné odpovědi by blokovala
+     * opakované spuštění téže akce (např. hlasovým příkazem).
      */
     public async executeIftttAction(action: Action): Promise<boolean> {
         const event = action?.iftttEvent;
@@ -148,19 +150,6 @@ export class CommandProcessor implements ICommandProcessor {
         const url = `${this.IFTTT_MAKER_BASE}/${encodeURIComponent(event)}/with/key/${encodeURIComponent(key)}`;
         console.log(`Příkaz nalezen: "${action.name}". Spouštím IFTTT událost: ${event}`);
 
-        // Check cache first (stejné chování jako webhooky)
-        const cachedResponse = this.cacheService.getWebhookCache(url);
-        if (cachedResponse) {
-            console.log(`Using cached response for IFTTT event ${event}`);
-            this.historyService.addCommand(
-                action.phrase,
-                action.name,
-                'ifttt',
-                'success'
-            );
-            return true;
-        }
-
         try {
             const fetchOptions: RequestInit = {
                 method: 'POST',
@@ -187,12 +176,6 @@ export class CommandProcessor implements ICommandProcessor {
                     'ifttt',
                     'success'
                 );
-
-                // Cache successful response (5 minut)
-                this.cacheService.setWebhookCache(url, {
-                    status: response.status,
-                    statusText: response.statusText
-                }, this.IFTTT_CACHE_TTL_MS);
 
                 if (this.notificationService.isEnabled()) {
                     this.notificationService.showSuccess(
@@ -248,7 +231,8 @@ export class CommandProcessor implements ICommandProcessor {
     /**
      * Zavolá službu Home Assistant přes REST API
      * (POST {url}/api/services/{domain}/{service}, Bearer token).
-     * Zahrnuje cache, historii, notifikace a TTS odezvu.
+     * Zahrnuje historii, notifikace a TTS odezvu.
+     * Odpovědi se necachují (POST akce – viz executeIftttAction).
      */
     public async executeHomeAssistantAction(action: Action): Promise<boolean> {
         const instanceUrl = (action?.url ?? '').trim().replace(/\/+$/, '');
@@ -286,20 +270,6 @@ export class CommandProcessor implements ICommandProcessor {
         const apiUrl = `${instanceUrl}/api/services/${domain}/${serviceName}`;
         console.log(`Příkaz nalezen: "${action.name}". Volám Home Assistant službu: ${service}`);
 
-        // Check cache first (stejné chování jako webhooky)
-        const cacheKey = `${apiUrl}:${entity ?? ''}`;
-        const cachedResponse = this.cacheService.getWebhookCache(cacheKey);
-        if (cachedResponse) {
-            console.log(`Using cached response for Home Assistant service ${service}`);
-            this.historyService.addCommand(
-                action.phrase,
-                action.name,
-                'homeassistant',
-                'success'
-            );
-            return true;
-        }
-
         try {
             const fetchOptions: RequestInit = {
                 method: 'POST',
@@ -325,12 +295,6 @@ export class CommandProcessor implements ICommandProcessor {
                     'homeassistant',
                     'success'
                 );
-
-                // Cache successful response (5 minut)
-                this.cacheService.setWebhookCache(cacheKey, {
-                    status: response.status,
-                    statusText: response.statusText
-                }, this.IFTTT_CACHE_TTL_MS);
 
                 if (this.notificationService.isEnabled()) {
                     this.notificationService.showSuccess(
@@ -424,7 +388,7 @@ export class CommandProcessor implements ICommandProcessor {
         return true;
     }
 
-    /** Spustí webhook definovaný akcí (cache, historie, notifikace, log). */
+    /** Spustí webhook definovaný akcí (historie, notifikace, log). Odpovědi se necachují (POST akce). */
     public async executeWebhookAction(action: Action): Promise<boolean> {
         // Null check URL před jakýmkoli dalším zpracováním (kvůli strictNullChecks)
         const actionUrl = action?.url;
@@ -443,20 +407,6 @@ export class CommandProcessor implements ICommandProcessor {
         console.log(`Příkaz nalezen: "${action.name}". Volám webhook: ${actionUrl}`);
 
         const webhookAuth: WebhookAuth = this.settingsService.getWebhookAuth();
-
-        // Check cache first
-        const cachedResponse = this.cacheService.getWebhookCache(actionUrl);
-
-        if (cachedResponse) {
-            console.log(`Using cached response for ${actionUrl}`);
-            this.historyService.addCommand(
-                action.phrase,
-                action.name,
-                'webhook',
-                'success'
-            );
-            return true;
-        }
 
         if (!Validators.isValidWebhookUrl(actionUrl)) {
             console.error(`Neplatná webhook URL akce "${action.name}": ${actionUrl}`);
@@ -487,12 +437,6 @@ export class CommandProcessor implements ICommandProcessor {
                     'webhook',
                     'success'
                 );
-
-                // Cache successful response (5 minut)
-                this.cacheService.setWebhookCache(actionUrl, {
-                    status: response.status,
-                    statusText: response.statusText
-                }, 300000);
 
                 if (this.notificationService.isEnabled()) {
                     this.notificationService.showSuccess(
@@ -631,3 +575,4 @@ export class CommandProcessor implements ICommandProcessor {
         }
     }
 }
+

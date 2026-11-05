@@ -3,6 +3,9 @@ import { Application, AndroidApplication } from '@nativescript/core';
 
 /** Správa oprávnění Android (mikrofon). */
 export class PermissionsService {
+    /** Timeout pro čekání na výsledek systémového dialogu (ms). */
+    private readonly PERMISSION_TIMEOUT_MS = 30000;
+
     /**
      * Oprávnění k mikrofonu se řeší lazy – globální proměnná android
      * nemusí být dostupná v okamžiku importu modulu (statický
@@ -66,22 +69,47 @@ export class PermissionsService {
         const REQUEST_CODE = 1234;
 
         return new Promise((resolve) => {
+            let settled = false;
+            let timer: any;
+
+            // Jednotné ukončení: vždy odregistruje listener a zruší timer,
+            // aby neprotékaly (Promise bez timeoutu dřív visel navždy
+            // při „Don't ask again" nebo přerušeném dialogu).
+            const finish = (granted: boolean) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                if (timer !== undefined) {
+                    clearTimeout(timer);
+                    timer = undefined;
+                }
+                Application.android.off(AndroidApplication.activityRequestPermissionsEvent, callback);
+                resolve(granted);
+            };
+
             const callback = (args: any) => {
                 const requestCode = args.requestCode;
-                const permissions = args.permissions;
                 const grantResults = args.grantResults;
 
                 if (requestCode === REQUEST_CODE) {
-                    Application.android.off(AndroidApplication.activityRequestPermissionsEvent, callback);
                     if (grantResults.length > 0 && grantResults[0] === 0 /* PERMISSION_GRANTED */) {
-                        resolve(true);
+                        finish(true);
                     } else {
-                        resolve(false);
+                        finish(false);
                     }
                 }
             };
 
             Application.android.on(AndroidApplication.activityRequestPermissionsEvent, callback);
+
+            // Timeout – systémový dialog nemusí nikdy vrátit výsledek
+            // („Don't ask again", dialog přerušen jinou aktivitou).
+            timer = setTimeout(() => {
+                console.warn('Vyžádání oprávnění vypršelo (timeout) – dialog nevrátil výsledek.');
+                finish(false);
+            }, this.PERMISSION_TIMEOUT_MS);
+
             try {
                 // androidx ActivityCompat, fallback na starší support knihovnu
                 // a nakonec na requestPermissions přímo na aktivitě (API 23+).
@@ -92,14 +120,13 @@ export class PermissionsService {
                 } else if (typeof activity.requestPermissions === 'function') {
                     activity.requestPermissions([permission], REQUEST_CODE);
                 } else {
-                    Application.android.off(AndroidApplication.activityRequestPermissionsEvent, callback);
-                    resolve(false);
+                    finish(false);
                 }
             } catch (error) {
                 console.error('Chyba při vyžádání oprávnění:', error);
-                Application.android.off(AndroidApplication.activityRequestPermissionsEvent, callback);
-                resolve(false);
+                finish(false);
             }
         });
     }
 }
+

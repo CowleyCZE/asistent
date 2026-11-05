@@ -29,6 +29,14 @@ describe('AssistantService', () => {
         taskName: 'PlayMusic'
     };
 
+    const iftttAction: Action = {
+        name: 'Kamera',
+        phrase: 'zapni kameru',
+        type: 'ifttt',
+        iftttEvent: 'camera_on',
+        iftttKey: 'abc123XYZ_-key'
+    };
+
     const homeAssistantAction: Action = {
         name: 'Světlo HA',
         phrase: 'rozsviť světlo přes home assistant',
@@ -49,7 +57,7 @@ describe('AssistantService', () => {
         mockReset();
 
         mockSettingsService = {
-            getActions: () => [webhookAction, taskerAction],
+            getActions: () => [webhookAction, taskerAction, iftttAction, homeAssistantAction, customAction],
             getWebhookAuth: () => ({}),
             getSettings: () => ({})
         };
@@ -222,6 +230,21 @@ describe('AssistantService', () => {
             );
             expect(mockCommandProcessor.executeWebhookAction).not.toHaveBeenCalled();
         });
+
+        it('IFTTT akci offline do fronty nezařadí (fronta umí jen webhook/tasker)', async () => {
+            // Simulace Android kontextu: getActiveNetworkInfo vrací null -> offline
+            (global as any).android = {
+                context: {
+                    CONNECTIVITY_SERVICE: 'connectivity',
+                    getSystemService: () => ({ getActiveNetworkInfo: () => null })
+                }
+            };
+
+            const result = await assistantService.processCommand('zapni kameru');
+            expect(result).toBe(false);
+            expect(mockOfflineService.queueCommand).not.toHaveBeenCalled();
+            expect(mockCommandProcessor.executeIftttAction).not.toHaveBeenCalled();
+        });
     });
 
     describe('processCommand - TTS integrace', () => {
@@ -283,3 +306,4 @@ describe('AssistantService', () => {
         });
     });
 });
+

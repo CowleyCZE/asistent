@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (10. běh – opraveny obě P0 chyby a P1 offline detekce)
+**Poslední aktualizace:** 5. listopadu 2026 (11. běh – opraveny 4 P1 chyby: IFTTT akce se neukládají do offline fronty; dvojité navyšování pokusů v OfflineService; odstraněna cache webhook/IFTTT/HA odpovědí blokující opakované spuštění akce; timeout a cleanup listeneru v PermissionsService)
 **Dokument pročištěn:** dokončené úkoly odstraněny (archiv ve starších commitech), zůstávají pouze otevřené a nově nalezené chyby.
 
 ---
@@ -15,10 +15,6 @@
 ## P1 - DŮLEŽITÉ (Vysoká priorita) #nové-chyby
 
 ### Chyby v kódu
-- [ ] **IFTTT akce se ukládají do offline fronty, ale fronta umí zpracovat jen webhook/tasker** – v offline režimu se ifttt akce zařadí do fronty bez `actionUrl`/`actionTaskName`; `OfflineService.processNextCommand` pro ni nic neprovede, opakovaně selže a po 3 pokusech visí ve frontě navždy (neprovede se, ale ani nezmizí). Oprava: ifttt do fronty neukládat (stejně jako HA/custom) nebo frontu rozšířit o zpracování ifttt. #nová-chyba
-- [ ] **OfflineService.processNextCommand dvojité navyšování pokusů** – `command.attempts++` se provádí před try i znovu v catch bloku; při výjimce se pokus započítá dvakrát (příkaz „vyčerpá" 3 pokusy po jediné výjimce). #nová-chyba
-- [ ] **Cache webhook/IFTTT odpovědí blokuje opakované spuštění akce** – úspěšná odpověď se cachuje na 5 minut podle URL (`getWebhookCache`/`setWebhookCache`). Opakovaný hlasový příkaz pro tutéž akci do 5 minut se NEPROVEDE, jen se hlásí success (u IFTTT i `executeWebhookAction`/`executeWebhookUrl`). Pro hlasové triggery je to funkční chyba – cache používat jen pro GET / read-only endpointy nebo výrazně zkrátit TTL a přidat parametr času do klíče. #nová-chyba
-- [ ] **PermissionsService.requestPermission: Promise bez timeoutu a leak listeneru** – pokud systémový dialog nikdy nevrátí výsledek („Don't ask again", dialog přerušený), Promise visí navždy a event listener zůstává zaregistrovaný. Přidat timeout a `off()` v `finally`. #nová-chyba
 - [ ] **Wake word smyčka bez omezení chyb** – `onError` v continuousListening režimu automaticky restartuje poslech po 1 s bez ohledu na typ chyby a bez maximálního počtu pokusů/backoffu (trvalá chyba jako RECOGNIZER_BUSY nebo INSUFFICIENT_PERMISSIONS → tichá nekonečná smyčka, drenž baterie). #nová-chyba
 - [ ] **TTS speak(): listener nepřipojen a předčasné resolve** – `UtteranceProgressListener` se vytvoří, ale nikdy nepřipojí přes `setOnUtteranceProgressListener`; `resolve(true)` se volá okamžitě po `speak()`, takže promise nečeká dokončení řeči; všichni používají pevné `'utterance_id'`. Následek: překrývání/míchání TTS odpovědí a nespolehlivé await. #nová-chyba
 
@@ -45,7 +41,7 @@
 
 ---
 
-## P4 - DLOUHODOBÉ (přeneseno – dosud otevřené)
+## P4 - DLOUHODOBÉ (přeneseno – dosud otevřeneno)
 
 ### Nové integrace
 - [ ] Google Assistant integrace
@@ -80,11 +76,11 @@
 ## STATISTIKA
 
 - P0 (Kritické): 0 (2 opraveny v 10. běhu)
-- P1 (Důležité): 6 otevřených (1 opravena v 10. běhu: isOnline/offline detekce)
+- P1 (Důležité): 2 otevřené (1 opravena v 10. běhu: isOnline/offline detekce; 4 opraveny v 11. běhu)
 - P2 (Střední): 5 otevřených
-- P3 (Nízká): 3 blokované
-- P4 (Dlouhodobé): 20 úkolů
-- **Celkem otevřeno: 34**
+- P3 (Nízké): 3 blokované
+- P4 (Dlouhodobé): 18 úkolů
+- **Celkem otevřeno: 28**
 
 ---
 

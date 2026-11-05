@@ -79,6 +79,14 @@ export class AssistantService implements IAssistantService {
     }
 
     /**
+     * Typy akcí, které offline fronta umí zpracovat.
+     * OfflineService.processNextCommand provede pouze webhooky
+     * (executeWebhook) a Tasker úlohy (executeTasker); ostatní typy
+     * by ve frontě visely navždy, proto se do ní nesmí dostat.
+     */
+    private static readonly OFFLINE_SUPPORTED_TYPES = ['webhook', 'tasker'];
+
+    /**
  * Zpracuje hlasový příkaz: sanitizace, matchování fráze, offline fronta
      * a vykonání přes CommandProcessor (webhook/tasker/ifttt/homeassistant/custom);
      * pokud žádná akce neodpovídá, zkusí rozpoznat záměr (intent recognition)
@@ -103,8 +111,11 @@ export class AssistantService implements IAssistantService {
         if (matchedAction) {
             // Check if we're offline
             if (!this.isOnline()) {
-                // HA/custom akce offline frontu nepodporují (zpracovává jen webhooky/tasker)
-                if (matchedAction.type === 'homeassistant' || matchedAction.type === 'custom') {
+                // Offline fronta umí zpracovat jen webhooky a tasker úlohy.
+                // IFTTT nemá v OfflineCommand záznamu žádné pole (chybí
+                // actionUrl/actionTaskName), takže by se ve frontě nikdy
+                // neprovedla – proto se ukládá jen podporovaný typ.
+                if (!AssistantService.OFFLINE_SUPPORTED_TYPES.includes(matchedAction.type)) {
                     if (this.notificationService.isEnabled()) {
                         this.notificationService.showWarning(
                             'Offline režim',

@@ -129,16 +129,20 @@ export class OfflineService {
                 this.removeCommand(command.id);
                 this.updateStats('processed');
             } else {
-                // Update queue with incremented attempts
-                this.saveQueue(pending);
+                // Update queue with incremented attempts.
+                // Ukládáme celou frontu – uložením pouze `pending` by se
+                // z fronty nenávratně ztratily příkazy s vyčerpanými pokusy.
+                this.saveQueue(queue);
                 this.updateStats('failed');
             }
 
             return success;
         } catch (error) {
             console.error('Error processing offline command:', error);
-            command.attempts++;
-            this.saveQueue(pending);
+            // Pokus byl započítán už před try blokem – v catch se
+            // nepřičítá znovu (dřívější dvojité navyšování způsobilo,
+            // že jedna výjimka vyčerpala 2 ze 3 pokusů).
+            this.saveQueue(queue);
             this.updateStats('failed');
             return false;
         }
@@ -289,3 +293,4 @@ export class OfflineService {
         };
     }
 }
+

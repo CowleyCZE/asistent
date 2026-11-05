@@ -64,6 +64,17 @@ describe('OfflineService', () => {
         expect(service.getStats().totalFailed).toBe(1);
     });
 
+    it('výjimka započítá jen jeden pokus (žádné dvojité navyšování)', async () => {
+        service.queueCommand('cmd', 'A', 'webhook', 'https://example.com/hook');
+        const webhook = jest.fn().mockRejectedValue(new Error('boom'));
+        await service.processNextCommand(webhook as any, jest.fn() as any);
+        const queue = service.getQueue();
+        expect(queue.length).toBe(1);
+        expect(queue[0].attempts).toBe(1);
+        // Příkaz zůstává ve frontě (neztrácí se) a lze ho zkusit znovu
+        expect(service.getPendingCommands().length).toBe(1);
+    });
+
     it('příkaz po 3 pokusech je považován za selhaný', async () => {
         service.queueCommand('cmd', 'A', 'webhook', 'https://example.com/hook');
         const webhook = jest.fn().mockResolvedValue(false);
@@ -157,3 +168,4 @@ describe('OfflineService', () => {
         expect(path).toContain('offline_queue.json');
     });
 });
+

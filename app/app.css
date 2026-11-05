@@ -2,26 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom CSS Variables for Theme Support */
+/* ============================================
+   BAREVNÉ SCHÉMA (P3 Design)
+   Rafinovaná paleta na bázi Tailwind (slate/indigo/violet)
+   + sémantické tokeny pro stavové barvy.
+   ============================================ */
 :root {
-    --primary-color: #3b82f6;
-    --accent-color: #8b5cf6;
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --accent-color: #7c3aed;
+    --success-color: #16a34a;
+    --danger-color: #dc2626;
+    --warning-color: #d97706;
+    --info-color: #0ea5e9;
     --bg-primary: #ffffff;
-    --bg-secondary: #f5f5f5;
-    --text-primary: #000000;
-    --text-secondary: #666666;
-    --border-color: #e0e0e0;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    --bg-secondary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
+    --shadow-color: rgba(15, 23, 42, 0.08);
+    --shadow-color-strong: rgba(15, 23, 42, 0.16);
 }
 
 /* Dark Mode Theme */
 .dark {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --text-primary: #ffffff;
-    --text-secondary: #cccccc;
-    --border-color: #444444;
-    --shadow-color: rgba(0, 0, 0, 0.5);
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+    --accent-color: #8b5cf6;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #38bdf8;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --shadow-color-strong: rgba(0, 0, 0, 0.6);
 }
 
 /* Animations */
@@ -155,6 +173,150 @@
     animation: spin 1s linear infinite;
 }
 
+/* ============================================
+   MODERNÍ UI KOMPONENTY (P3 Design)
+   Opakovatelné, motiv-aware třídy použitelné
+   na všech stránkách aplikace.
+   ============================================ */
+
+/* Karta – základní kontejner obsahu */
+.card {
+    background-color: var(--bg-primary);
+    border-radius: 12;
+    padding: 16;
+    border-width: 1;
+    border-color: var(--border-color);
+}
+
+.card-elevated {
+    background-color: var(--bg-primary);
+    border-radius: 12;
+    padding: 16;
+    box-shadow: 0 4px 12px var(--shadow-color-strong);
+}
+
+/* Chip – malý štítek pro kategorie/hodnoty */
+.chip {
+    font-size: 12;
+    padding: 4 12;
+    border-radius: 100;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.chip-primary {
+    font-size: 12;
+    padding: 4 12;
+    border-radius: 100;
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+/* Badge – stavový indikátor (např. počet ve frontě) */
+.badge {
+    min-width: 20;
+    padding: 2 6;
+    border-radius: 100;
+    background-color: var(--danger-color);
+    color: #ffffff;
+    font-size: 11;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Základní tlačítko */
+.btn {
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+}
+
+.btn-secondary {
+    background-color: var(--bg-secondary);
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    border-width: 1;
+    border-color: var(--border-color);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: #ffffff;
+    text-align: center;
+}
+
+.btn-ghost {
+    background-color: transparent;
+    border-radius: 10;
+    padding: 10 16;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+/* Textové pole */
+.input {
+    background-color: var(--bg-secondary);
+    border-radius: 10;
+    border-width: 1;
+    border-color: var(--border-color);
+    padding: 10 14;
+    color: var(--text-primary);
+}
+
+/* Oddělovač sekcí */
+.divider {
+    height: 1;
+    background-color: var(--border-color);
+    margin: 8 0;
+}
+
+/* Řádek seznamu */
+.list-item {
+    padding: 14 16;
+    border-bottom-width: 1;
+    border-bottom-color: var(--border-color);
+    background-color: var(--bg-primary);
+}
+
+/* Plovoucí akční tlačítko */
+.fab {
+    width: 56;
+    height: 56;
+    border-radius: 100;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-size: 24;
+    text-align: center;
+    box-shadow: 0 4px 12px var(--shadow-color-strong);
+}
+
 /* Notification Styles */
 .notification-container {
     position: fixed;
@@ -173,19 +335,19 @@
 }
 
 .notification-success {
-    background-color: #22c55e;
+    background-color: var(--success-color);
 }
 
 .notification-error {
-    background-color: #ef4444;
+    background-color: var(--danger-color);
 }
 
 .notification-warning {
-    background-color: #f97316;
+    background-color: var(--warning-color);
 }
 
 .notification-info {
-    background-color: #3b82f6;
+    background-color: var(--info-color);
 }
 
 /* Theme-aware Tailwind Overrides */

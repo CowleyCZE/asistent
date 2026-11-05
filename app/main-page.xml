@@ -1,36 +1,36 @@
 <Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="navigatingTo" class="bg-theme-primary">
-    <ActionBar title="Hlasov\u00fd Asistent" class="bg-blue-600 text-white" />
-    
+    <ActionBar title="Hlasový Asistent" class="bg-blue-600 text-white" />
+
     <StackLayout class="p-4 space-y-4 animate-fade-in">
-        <!-- Offline indik\u00e1tor -->
-        <StackLayout orientation="horizontal" class="bg-orange-500 text-white p-2 rounded-lg" 
+        <!-- Offline indikátor -->
+        <StackLayout orientation="horizontal" class="bg-orange-500 text-white p-2 rounded-lg"
                      visibility="{{ isOffline ? 'visible' : 'collapsed' }}" animation="slideIn">
-            <Label text="⚠ Offline režim" class="font-bold flex-1" />
+            <Label text="⚠️ Offline režim" class="font-bold flex-1" />
             <Label text="Fronta: {{ offlineQueueCount }}" class="text-sm" />
-            <Button text="Zpracovat" tap="{{ processOfflineQueue }}" accessibilityLabel="Zpracovat frontu offline příkazů" class="bg-white text-orange-500 text-xs font-bold p-1 rounded ml-2" />
+            <Button text="⚙️ Zpracovat" tap="{{ processOfflineQueue }}" accessibilityLabel="Zpracovat frontu offline příkazů" class="bg-white text-orange-500 text-xs font-bold p-1 rounded ml-2" />
         </StackLayout>
-        
-        <!-- Status indik\u00e1tor -->
+
+        <!-- Status indikátor -->
         <Label text="{{ status }}" class="text-lg text-center font-bold text-theme-primary" textWrap="true" />
-        
-        <!-- Tla\u010d\u00edtko pro aktivaci -->
-        <Button text="{{ isListening ? 'Stop' : 'Start' }}" accessibilityLabel="{{ isListening ? 'Zastavit naslouchání' : 'Spustit naslouchání' }}" 
-                tap="{{ toggleListening }}" 
+
+        <!-- Tlačítko pro aktivaci -->
+        <Button text="{{ isListening ? '⏹️ Stop' : '🎤 Start' }}" accessibilityLabel="{{ isListening ? 'Zastavit naslouchání' : 'Spustit naslouchání' }}"
+                tap="{{ toggleListening }}"
                 class="{{ isListening ? 'bg-red-500' : 'bg-green-500' }} text-white font-bold p-4 rounded-full btn-press transition-normal" />
-        
-        <!-- Rozpoznan\u00fd text -->
+
+        <!-- Rozpoznaný text -->
         <StackLayout class="bg-theme-secondary p-4 rounded-lg shadow-theme" visibility="{{ recognizedText ? 'visible' : 'collapsed' }}" animation="fadeIn">
-            <Label text="Rozpoznan\u00fd text:" class="text-sm text-theme-secondary" />
+            <Label text="📝 Rozpoznaný text:" class="text-sm text-theme-secondary" />
             <Label text="{{ recognizedText }}" class="text-lg font-semibold text-theme-primary" textWrap="true" />
         </StackLayout>
-        
-        <!-- P\u0159elo\u017een\u00fd text -->
+
+        <!-- Přeložený text -->
         <StackLayout class="bg-theme-secondary p-4 rounded-lg shadow-theme" visibility="{{ translatedText ? 'visible' : 'collapsed' }}" animation="fadeIn">
-            <Label text="P\u0159elo\u017een\u00fd text:" class="text-sm text-theme-secondary" />
+            <Label text="🌐 Přeložený text:" class="text-sm text-theme-secondary" />
             <Label text="{{ translatedText }}" class="text-lg font-semibold text-theme-primary" textWrap="true" />
         </StackLayout>
-        
-        <!-- Nastaven\u00ed -->
-        <Button text="Nastaven\u00ed" tap="{{ showSettings }}" accessibilityLabel="Otevřít nastavení" class="bg-gray-500 text-white font-bold p-2 rounded transition-normal btn-press" />
+
+        <!-- Nastavení -->
+        <Button text="⚙️ Nastavení" tap="{{ showSettings }}" accessibilityLabel="Otevřít nastavení" class="bg-gray-500 text-white font-bold p-2 rounded transition-normal btn-press" />
     </StackLayout>
 </Page>

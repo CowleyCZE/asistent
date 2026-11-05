@@ -6,6 +6,7 @@ import { CacheService } from './cache.service';
 import { OfflineService } from './offline.service';
 import { NotificationService } from './notification.service';
 import { CommandProcessor } from './command-processor';
+import { IntentRecognitionService } from './intent-recognition.service';
 import { LoggerService } from '../utils/logger';
 import { ErrorHandler } from '../utils/error-handler';
 import { Validators, Limits } from '../utils/validation';
@@ -19,6 +20,7 @@ import {
     INotificationService,
     ILoggerService,
     ICommandProcessor,
+    IIntentRecognitionService,
     IAssistantService
 } from './service-interfaces';
 
@@ -36,6 +38,7 @@ export interface AssistantServiceDeps {
     offlineService?: IOfflineService;
     notificationService?: INotificationService;
     commandProcessor?: ICommandProcessor;
+    intentRecognitionService?: IIntentRecognitionService;
     logger?: ILoggerService;
 }
 
@@ -50,6 +53,8 @@ export class AssistantService implements IAssistantService {
     private offlineService: IOfflineService;
     private notificationService: INotificationService;
     private logger: ILoggerService;
+    private historyService: IHistoryService;
+    private intentRecognitionService: IIntentRecognitionService;
     private commandProcessor: ICommandProcessor;
 
     constructor(deps: AssistantServiceDeps = {}) {
@@ -59,6 +64,8 @@ export class AssistantService implements IAssistantService {
         this.offlineService = deps.offlineService ?? new OfflineService();
         this.notificationService = deps.notificationService ?? new NotificationService();
         this.logger = deps.logger ?? new LoggerService();
+        this.historyService = deps.historyService ?? new HistoryService();
+        this.intentRecognitionService = deps.intentRecognitionService ?? new IntentRecognitionService();
         this.commandProcessor = deps.commandProcessor ?? new CommandProcessor({
             settingsService: this.settingsService,
             taskerService: deps.taskerService ?? new TaskerService(),
@@ -71,8 +78,10 @@ export class AssistantService implements IAssistantService {
     }
 
     /**
-     * Zpracuje hlasový příkaz: sanitizace, matchování fráze, offline fronta
-     * a vykonání přes CommandProcessor (webhook/tasker/ifttt) + TTS odezva.
+ * Zpracuje hlasový příkaz: sanitizace, matchování fráze, offline fronta
+     * a vykonání přes CommandProcessor (webhook/tasker/ifttt/homeassistant/custom);
+     * pokud žádná akce neodpovídá, zkusí rozpoznat záměr (intent recognition)
+     * a přečíst odpověď přes TTS.
      * @returns true, pokud byla akce úspěšně vykonána.
      */
     public async processCommand(command: string): Promise<boolean> {
@@ -93,6 +102,25 @@ export class AssistantService implements IAssistantService {
         if (matchedAction) {
             // Check if we're offline
             if (!this.isOnline()) {
+                // HA/custom akce offline frontu nepodporují (zpracovává jen webhooky/tasker)
+                if (matchedAction.type === 'homeassistant' || matchedAction.type === 'custom') {
+                    if (this.notificationService.isEnabled()) {
+                        this.notificationService.showWarning(
+                            'Offline režim',
+                            `Akce ${matchedAction.name} vyžaduje připojení k internetu.`
+                        );
+                    }
+                    await this.speakSafely("Jsem offline. Tuto akci lze spustit jen online.");
+                    this.historyService.addCommand(
+                        sanitizedCommand,
+                        matchedAction.name,
+                        matchedAction.type,
+                        'error',
+                        'Akce vyžaduje online připojení'
+                    );
+                    return false;
+                }
+
                 this.offlineService.queueCommand(
                     sanitizedCommand,
                     matchedAction.name,
@@ -131,7 +159,29 @@ export class AssistantService implements IAssistantService {
                     await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
                 }
                 return success;
+            } else if (matchedAction.type === 'homeassistant') {
+                const success = await this.commandProcessor.executeHomeAssistantAction(matchedAction);
+                if (success) {
+                    await this.speakSafely(`Akce ${matchedAction.name} byla úspěšně provedena.`);
+                }
+                return success;
+            } else if (matchedAction.type === 'custom') {
+                return this.commandProcessor.executeCustomAction(matchedAction);
             }
+        }
+
+        // Fallback: rozpoznání záměru (P4 AI/ML intent recognition)
+        const recognizedIntent = this.intentRecognitionService.recognize(sanitizedCommand);
+        if (recognizedIntent) {
+            console.log(`Rozpoznan záměr "${recognizedIntent.intent}" pro příkaz "${sanitizedCommand}".`);
+            this.historyService.addCommand(
+                sanitizedCommand,
+                `intent:${recognizedIntent.intent}`,
+                'intent',
+                'success'
+            );
+            await this.speakSafely(recognizedIntent.response);
+            return true;
         }
 
         console.log(`Pro příkaz "${sanitizedCommand}" nebyla nalezena žádná akce.`);

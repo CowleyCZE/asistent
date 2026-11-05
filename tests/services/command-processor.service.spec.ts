@@ -38,6 +38,23 @@ describe('CommandProcessor', () => {
         iftttKey: 'abc123XYZ_-key'
     };
 
+    const homeAssistantAction: Action = {
+        name: 'Světlo HA',
+        phrase: 'rozsviť světlo přes home assistant',
+        type: 'homeassistant',
+        url: 'https://ha.example.com',
+        haToken: 'longlivedtoken123',
+        haService: 'light.turn_on',
+        haEntity: 'light.obyvak'
+    };
+
+    const customAction: Action = {
+        name: 'Můj příkaz',
+        phrase: 'jak se máš',
+        type: 'custom',
+        customResponse: 'Mám se skvěle, díky za optání!'
+    };
+
     const createProcessor = () => new CommandProcessor({
         settingsService: mockSettingsService,
         taskerService: mockTaskerService,
@@ -189,6 +206,110 @@ describe('CommandProcessor', () => {
             );
             expect(mockLogger.networkError).toHaveBeenCalled();
         }, 15000);
+    });
+
+    describe('executeHomeAssistantAction', () => {
+        it('vrátí false, když akci chybí URL, token nebo služba', async () => {
+            const result = await processor.executeHomeAssistantAction({ ...homeAssistantAction, haToken: undefined });
+            expect(result).toBe(false);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'error',
+                'Chybí URL instance, token nebo služba Home Assistant'
+            );
+        });
+
+        it('odmítne neplatnou službu (formát doména.sluzba)', async () => {
+            const result = await processor.executeHomeAssistantAction({ ...homeAssistantAction, haService: 'turn_on' });
+            expect(result).toBe(false);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'error',
+                'Neplatná URL nebo služba Home Assistant'
+            );
+            expect(mockLogger.error).toHaveBeenCalled();
+        });
+
+        it('použije cache, pokud je odpověď služby cached', async () => {
+            mockCacheService.getWebhookCache = jest.fn(() => ({ status: 200, timestamp: Date.now(), ttl: 300000 }));
+            const result = await processor.executeHomeAssistantAction(homeAssistantAction);
+            expect(result).toBe(true);
+            expect(global.fetch).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'success'
+            );
+        });
+
+        it('úspěšně zavolá HA REST API s Bearer tokenem a entity_id', async () => {
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
+            const result = await processor.executeHomeAssistantAction(homeAssistantAction);
+            expect(result).toBe(true);
+            const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+            expect(url).toBe('https://ha.example.com/api/services/light/turn_on');
+            expect(options.method).toBe('POST');
+            expect(options.headers['Authorization']).toBe('Bearer longlivedtoken123');
+            expect(JSON.parse(options.body).entity_id).toBe('light.obyvak');
+            expect(mockCacheService.setWebhookCache).toHaveBeenCalledWith(
+                'https://ha.example.com/api/services/light/turn_on:light.obyvak',
+                expect.objectContaining({ status: 200, statusText: 'OK' }),
+                300000
+            );
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'success'
+            );
+            expect(mockLogger.success).toHaveBeenCalled();
+        });
+
+        it('zvládne URL instance s koncovým lomítkem', async () => {
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: true, status: 200, statusText: 'OK' });
+            const result = await processor.executeHomeAssistantAction({ ...homeAssistantAction, url: 'https://ha.example.com/' });
+            expect(result).toBe(true);
+            expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe('https://ha.example.com/api/services/light/turn_on');
+        });
+
+        it('zaznamená HTTP chybu HA služby', async () => {
+            (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' });
+            const result = await processor.executeHomeAssistantAction(homeAssistantAction);
+            expect(result).toBe(false);
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'error', 'Unauthorized'
+            );
+            expect(mockLogger.error).toHaveBeenCalled();
+        });
+
+        it('zaznamená síťovou chybu jako network_error (retry s backoff)', async () => {
+            (global.fetch as jest.Mock).mockRejectedValue(new Error('network down'));
+            const result = await processor.executeHomeAssistantAction(homeAssistantAction);
+            expect(result).toBe(false);
+            expect(global.fetch).toHaveBeenCalledTimes(3);
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'rozsviť světlo přes home assistant', 'Světlo HA', 'homeassistant', 'network_error',
+                'network down'
+            );
+            expect(mockLogger.networkError).toHaveBeenCalled();
+        }, 15000);
+    });
+
+    describe('executeCustomAction', () => {
+        it('přečte vlastní odpověď přes TTS a zaznamená úspěch', () => {
+            mockTtsService.isEnabled = jest.fn(() => true);
+            const result = processor.executeCustomAction(customAction);
+            expect(result).toBe(true);
+            expect(mockTtsService.speak).toHaveBeenCalledWith('Mám se skvěle, díky za optání!');
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'jak se máš', 'Můj příkaz', 'custom', 'success'
+            );
+            expect(mockLogger.success).toHaveBeenCalled();
+        });
+
+        it('vrátí false, když akce nemá vlastní odpověď', () => {
+            const result = processor.executeCustomAction({ ...customAction, customResponse: undefined });
+            expect(result).toBe(false);
+            expect(mockTtsService.speak).not.toHaveBeenCalled();
+            expect(mockHistoryService.addCommand).toHaveBeenCalledWith(
+                'jak se máš', 'Můj příkaz', 'custom', 'error', 'Chybí vlastní odpověď'
+            );
+        });
     });
 
     describe('executeWebhookAction', () => {

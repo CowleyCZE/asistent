@@ -2,16 +2,20 @@ import { ApplicationSettings } from '@nativescript/core';
 import { StorageKeys } from '../utils/constants';
 import { Validators, ValidationResult } from '../utils/validation';
 
-export type ActionType = 'webhook' | 'tasker' | 'ifttt';
+export type ActionType = 'webhook' | 'tasker' | 'ifttt' | 'homeassistant' | 'custom';
 
 export interface Action {
     name: string;
     phrase: string;
     type: ActionType;
-    url?: string; // Pro webhooky
+    url?: string; // Pro webhooky; pro Home Assistant základní URL instance
     taskName?: string; // Pro Tasker
     iftttEvent?: string; // Název události pro IFTTT Maker Webhooks
     iftttKey?: string; // Klíč IFTTT Maker Webhooks
+    haToken?: string; // Long-lived access token Home Assistant
+    haService?: string; // Služba Home Assistant (např. light.turn_on)
+    haEntity?: string; // Entity ID Home Assistant (např. light.obyvak), volitelné
+    customResponse?: string; // Vlastní TTS odpověď pro typ 'custom'
 }
 
 export interface WebhookAuth {

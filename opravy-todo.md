@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (7. běh)
+**Poslední aktualizace:** 5. listopadu 2026 (8. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -140,17 +140,17 @@
 ## P4 - DLOUHODOBÉ
 
 ### Nové integrace
-- [ ] Home Assistant integrace
+- [x] Home Assistant integrace (8. běh: nový typ akce 'homeassistant' – CommandProcessor.executeHomeAssistantAction volá REST API POST {url}/api/services/{domain}/{service} s Bearer long-lived tokenem a entity_id; retry/backoff, timeout, cache, historie, notifikace, TTS; validace URL/tokenu/služby/entity (Validators.HA_SERVICE_PATTERN/HA_ENTITY_PATTERN); UI segment + pole v Nastavení > Akce; 7 unit testů)
 - [x] IFTTT integrace (7. běh: nový typ akce 'ifttt' – CommandProcessor.executeIftttAction volá Maker Webhooks URL https://maker.ifttt.com/trigger/{event}/with/key/{key} s POST + JSON hodnotami value1–3, retry/backoff, timeout, cache, historie, notifikace, TTS; validace event/klíče (Validators.IFTTT_TOKEN_PATTERN); výběr typu a pole event/klíč v Nastavení > Akce; dispatch v AssistantService; ICommandProcessor rozšířen; 6 unit testů)
 - [ ] Google Assistant integrace
 - [ ] Alexa integrace
 - [ ] IoT platform integrace
 
 ### AI/ML
-- [ ] Přidat intent recognition
+- [x] Přidat intent recognition (8. běh: IntentRecognitionService – rule-based rozpoznávání záměrů pro češtinu: time/date/greeting/thanks/joke/weather/help; fallback v AssistantService, když žádná akce neodpovídá → TTS odpověď + zápis do historie jako 'intent'; IIntentRecognitionService pro DI; 9 unit testů intent-recognition.service.spec.ts + 3 testy fallbacku v assistant.service.spec.ts)
 - [ ] Implementovat NLP
 - [ ] Přidat context understanding
-- [ ] Umožnit custom commands
+- [x] Umožnit custom commands (8. běh: nový typ akce 'custom' s vlastní TTS odpovědí (customResponse, validace max 300 znaků) – CommandProcessor.executeCustomAction přečte odpověď, zapíše historii a notifikaci; UI segment „Vlastní" + pole odpovědi v Nastavení > Akce; 2 unit testy)
 
 ### Cloud a synchronizace
 - [ ] Synchronizovat nastavení přes cloud

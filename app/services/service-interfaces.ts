@@ -4,6 +4,7 @@
  */
 import { Action, WebhookAuth } from './settings.service';
 import { CommandStatus } from './history.service';
+import { RecognizedIntent } from './intent-recognition.service';
 
 export interface ISettingsService {
     getActions(): Action[];
@@ -60,6 +61,11 @@ export interface ILoggerService {
     networkError(message: string): void;
 }
 
+export interface IIntentRecognitionService {
+    /** Rozpozná záměr příkazu; null pro neznámý příkaz. */
+    recognize(command: string): RecognizedIntent | null;
+}
+
 export interface ICommandProcessor {
     /** Spustí webhook akci (cache, historie, notifikace). */
     executeWebhookAction(action: Action): Promise<boolean>;
@@ -67,6 +73,10 @@ export interface ICommandProcessor {
     executeTaskerAction(action: Action): boolean;
     /** Spustí IFTTT událost přes Maker Webhooks (cache, historie, notifikace). */
     executeIftttAction(action: Action): Promise<boolean>;
+    /** Zavolá službu Home Assistant REST API (cache, historie, notifikace). */
+    executeHomeAssistantAction(action: Action): Promise<boolean>;
+    /** Vykoná vlastní příkaz – jen TTS odpověď (historie, notifikace). */
+    executeCustomAction(action: Action): boolean;
     /** Zavolá webhook URL s autentizací (offline fronta). */
     executeWebhookUrl(url: string): Promise<boolean>;
     /** Spustí Tasker úlohu podle názvu (offline fronta). */

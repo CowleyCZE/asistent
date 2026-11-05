@@ -245,6 +245,185 @@ export class CommandProcessor implements ICommandProcessor {
         }
     }
 
+    /**
+     * Zavolá službu Home Assistant přes REST API
+     * (POST {url}/api/services/{domain}/{service}, Bearer token).
+     * Zahrnuje cache, historii, notifikace a TTS odezvu.
+     */
+    public async executeHomeAssistantAction(action: Action): Promise<boolean> {
+        const instanceUrl = (action?.url ?? '').trim().replace(/\/+$/, '');
+        const token = action?.haToken;
+        const service = action?.haService;
+        const entity = action?.haEntity;
+
+        // Null check: bez URL, tokenu ani služby nelze Home Assistant zavolat
+        if (!instanceUrl || !token || !service) {
+            console.error(`Home Assistant akce "${action?.name ?? 'neznámá'}" nemá URL, token ani službu.`);
+            this.historyService.addCommand(
+                action?.phrase ?? '',
+                action?.name ?? 'neznámá akce',
+                'homeassistant',
+                'error',
+                'Chybí URL instance, token nebo služba Home Assistant'
+            );
+            return false;
+        }
+
+        if (!Validators.isValidWebhookUrl(instanceUrl) || !Validators.HA_SERVICE_PATTERN.test(service)) {
+            console.error(`Neplatná URL nebo služba Home Assistant akce "${action.name}".`);
+            this.logger.error(`Neplatná URL/služba Home Assistant: ${action.name}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'homeassistant',
+                'error',
+                'Neplatná URL nebo služba Home Assistant'
+            );
+            return false;
+        }
+
+        const [domain, serviceName] = service.split('.');
+        const apiUrl = `${instanceUrl}/api/services/${domain}/${serviceName}`;
+        console.log(`Příkaz nalezen: "${action.name}". Volám Home Assistant službu: ${service}`);
+
+        // Check cache first (stejné chování jako webhooky)
+        const cacheKey = `${apiUrl}:${entity ?? ''}`;
+        const cachedResponse = this.cacheService.getWebhookCache(cacheKey);
+        if (cachedResponse) {
+            console.log(`Using cached response for Home Assistant service ${service}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'homeassistant',
+                'success'
+            );
+            return true;
+        }
+
+        try {
+            const fetchOptions: RequestInit = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(entity ? { entity_id: entity } : {})
+            };
+
+            // fetch s timeoutem a retry s exponential backoff
+            const response = await retryWithBackoff(
+                () => fetchWithTimeout(apiUrl, fetchOptions, this.REQUEST_TIMEOUT_MS),
+                { retries: this.WEBHOOK_RETRIES, baseDelayMs: 1000 }
+            );
+
+            if (response.ok) {
+                console.log(`Home Assistant služba ${service} akce ${action.name} úspěšně zavolána.`);
+                this.logger.success(`HomeAssistant ${action.name} - ${service}`);
+                this.historyService.addCommand(
+                    action.phrase,
+                    action.name,
+                    'homeassistant',
+                    'success'
+                );
+
+                // Cache successful response (5 minut)
+                this.cacheService.setWebhookCache(cacheKey, {
+                    status: response.status,
+                    statusText: response.statusText
+                }, this.IFTTT_CACHE_TTL_MS);
+
+                if (this.notificationService.isEnabled()) {
+                    this.notificationService.showSuccess(
+                        'Úspěch',
+                        `Home Assistant služba ${action.name} byla úspěšně zavolána.`
+                    );
+                }
+
+                return true;
+            }
+
+            const statusText = response.statusText ?? 'neznámá chyba';
+            console.error(`Chyba při volání Home Assistant služby ${service}: ${statusText}`);
+            this.logger.error(`HomeAssistant ${action.name} - ${statusText}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'homeassistant',
+                'error',
+                statusText
+            );
+
+            if (this.notificationService.isEnabled()) {
+                this.notificationService.showError(
+                    'Chyba Home Assistant',
+                    `Nepodařilo se zavolat službu ${action.name}: ${statusText}`
+                );
+            }
+
+            return false;
+        } catch (error) {
+            const message = ErrorHandler.handle(`HomeAssistant ${action.name}`, error);
+            this.logger.networkError(`HomeAssistant ${action.name} - ${message}`);
+            this.historyService.addCommand(
+                action.phrase,
+                action.name,
+                'homeassistant',
+                'network_error',
+                message
+            );
+
+            if (this.notificationService.isEnabled()) {
+                this.notificationService.showError(
+                    'Síťová chyba',
+                    `Chyba sítě při volání Home Assistant ${action.name}`
+                );
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * Vykoná vlastní příkaz: přečte uloženou odpověď přes TTS
+     * (žádné externí volání). Zahrnuje historii a notifikace.
+     */
+    public executeCustomAction(action: Action): boolean {
+        const response = action?.customResponse;
+        if (!response) {
+            console.error(`Vlastní akce "${action?.name ?? 'neznámá'}" nemá nastavenou odpověď.`);
+            this.historyService.addCommand(
+                action?.phrase ?? '',
+                action?.name ?? 'neznámá akce',
+                'custom',
+                'error',
+                'Chybí vlastní odpověď'
+            );
+            return false;
+        }
+
+        console.log(`Vlastní příkaz "${action.name}" – čtu odpověď přes TTS.`);
+        this.historyService.addCommand(
+            action.phrase,
+            action.name,
+            'custom',
+            'success'
+        );
+        this.logger.success(`Vlastní příkaz ${action.name}`);
+
+        if (this.notificationService.isEnabled()) {
+            this.notificationService.showSuccess(
+                'Vlastní příkaz',
+                `Akce ${action.name} byla úspěšně provedena.`
+            );
+        }
+
+        if (this.ttsService.isEnabled()) {
+            this.ttsService.speak(response);
+        }
+
+        return true;
+    }
+
     /** Spustí webhook definovaný akcí (cache, historie, notifikace, log). */
     public async executeWebhookAction(action: Action): Promise<boolean> {
         // Null check URL před jakýmkoli dalším zpracováním (kvůli strictNullChecks)

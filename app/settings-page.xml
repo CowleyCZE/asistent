@@ -59,17 +59,19 @@
                 <TextField text="{{ newActionPhrase }}" hint="Spouštěcí fráze (např. rozsviť světlo)" class="p-2 bg-white rounded text-gray-800" />
 
                 <!-- Přepínač typu akce -->
-                <SegmentedBar selectedIndex="{{ newActionType === 'webhook' ? 0 : (newActionType === 'tasker' ? 1 : 2) }}"
-                              tap="{{ (args) => { newActionType = args.object.selectedIndex === 0 ? 'webhook' : (args.object.selectedIndex === 1 ? 'tasker' : 'ifttt') } }}"
+                <SegmentedBar selectedIndex="{{ newActionType === 'webhook' ? 0 : (newActionType === 'tasker' ? 1 : (newActionType === 'ifttt' ? 2 : (newActionType === 'homeassistant' ? 3 : 4))) }}"
+                              tap="{{ (args) => { newActionType = args.object.selectedIndex === 0 ? 'webhook' : (args.object.selectedIndex === 1 ? 'tasker' : (args.object.selectedIndex === 2 ? 'ifttt' : (args.object.selectedIndex === 3 ? 'homeassistant' : 'custom'))) } }}"
                               class="mt-2">
                     <SegmentedBarItem title="Webhook" />
                     <SegmentedBarItem title="Tasker" />
                     <SegmentedBarItem title="IFTTT" />
+                    <SegmentedBarItem title="Home As." />
+                    <SegmentedBarItem title="Vlastní" />
                 </SegmentedBar>
 
-                <!-- Pole pro URL (viditelné jen pro webhook) -->
-                <TextField text="{{ newActionUrl }}" hint="URL adresa webhooku" autocapitalizationType="none"
-                           visibility="{{ newActionType === 'webhook' ? 'visible' : 'collapsed' }}"
+                <!-- Pole pro URL (webhook i Home Assistant instance) -->
+                <TextField text="{{ newActionUrl }}" hint="{{ newActionType === 'homeassistant' ? 'URL Home Assistant (https://...)' : 'URL adresa webhooku' }}" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'webhook' || newActionType === 'homeassistant' ? 'visible' : 'collapsed' }}"
                            class="p-2 bg-white rounded mt-1 text-gray-800" />
 
                 <!-- Pole pro název úlohy (viditelné jen pro Tasker) -->
@@ -83,6 +85,22 @@
                            class="p-2 bg-white rounded mt-1 text-gray-800" />
                 <TextField text="{{ newActionIftttKey }}" hint="Klíč Maker Webhooks (Settings > Services)" autocapitalizationType="none"
                            visibility="{{ newActionType === 'ifttt' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+
+                <!-- Pole pro Home Assistant (viditelná jen pro Home Assistant) -->
+                <TextField text="{{ newActionHaToken }}" hint="Long-lived access token (Profil > Zabezpečení)" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'homeassistant' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+                <TextField text="{{ newActionHaService }}" hint="Služba (např. light.turn_on)" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'homeassistant' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+                <TextField text="{{ newActionHaEntity }}" hint="Entity ID (např. light.obyvak, volitelné)" autocapitalizationType="none"
+                           visibility="{{ newActionType === 'homeassistant' ? 'visible' : 'collapsed' }}"
+                           class="p-2 bg-white rounded mt-1 text-gray-800" />
+
+                <!-- Pole pro vlastní odpověď (jen pro typ custom) -->
+                <TextField text="{{ newActionCustomResponse }}" hint="Vlastní odpověď, kterou asistent přečte"
+                           visibility="{{ newActionType === 'custom' ? 'visible' : 'collapsed' }}"
                            class="p-2 bg-white rounded mt-1 text-gray-800" />
 
                 <Button text="➕ Přidat akci" tap="{{ addAction }}" accessibilityLabel="Přidat novou akci" class="mt-2 bg-blue-500 text-white font-bold rounded-lg transition-normal btn-press" />
@@ -99,7 +117,7 @@
 
                         <Label row="1" col="0" text="{{ phrase }}" class="text-sm text-theme-secondary mt-1" />
 
-                        <Label row="2" col="0" text="{{ type === 'webhook' ? url : (type === 'ifttt' ? iftttEvent : taskName) }}"
+                        <Label row="2" col="0" text="{{ type === 'webhook' || type === 'homeassistant' ? url : (type === 'ifttt' ? iftttEvent : (type === 'custom' ? 'Vlastní odpověď' : taskName)) }}"
                                class="text-xs text-blue-400 mt-1" textWrap="true" />
 
                         <Button row="0" rowspan="3" col="1" text="🗑️ Odstranit" tap="{{ $parent.removeAction }}" accessibilityLabel="Odstranit akci"

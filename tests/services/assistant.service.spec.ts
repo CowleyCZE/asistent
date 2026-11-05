@@ -29,6 +29,22 @@ describe('AssistantService', () => {
         taskName: 'PlayMusic'
     };
 
+    const homeAssistantAction: Action = {
+        name: 'Světlo HA',
+        phrase: 'rozsviť světlo přes home assistant',
+        type: 'homeassistant',
+        url: 'https://ha.example.com',
+        haToken: 'token123',
+        haService: 'light.turn_on'
+    };
+
+    const customAction: Action = {
+        name: 'Můj příkaz',
+        phrase: 'jak se máš',
+        type: 'custom',
+        customResponse: 'Mám se skvěle!'
+    };
+
     beforeEach(() => {
         mockReset();
 
@@ -41,6 +57,9 @@ describe('AssistantService', () => {
         mockCommandProcessor = {
             executeWebhookAction: jest.fn().mockResolvedValue(true),
             executeTaskerAction: jest.fn().mockReturnValue(true),
+            executeIftttAction: jest.fn().mockResolvedValue(true),
+            executeHomeAssistantAction: jest.fn().mockResolvedValue(true),
+            executeCustomAction: jest.fn().mockReturnValue(true),
             executeWebhookUrl: jest.fn().mockResolvedValue(true),
             executeTaskerTaskName: jest.fn().mockReturnValue(true)
         };
@@ -130,6 +149,51 @@ describe('AssistantService', () => {
             mockSettingsService.getActions = () => { throw new Error('boom'); };
             const result = await assistantService.processCommand('rozsviť světlo');
             expect(result).toBe(false);
+        });
+    });
+
+    describe('processCommand - nové typy akcí a záměry', () => {
+        beforeEach(() => {
+            mockSettingsService.getActions = () => [homeAssistantAction, customAction];
+        });
+
+        it('spustí Home Assistant akci přes CommandProcessor', async () => {
+            const result = await assistantService.processCommand('rozsviť světlo přes home assistant');
+            expect(result).toBe(true);
+            expect(mockCommandProcessor.executeHomeAssistantAction).toHaveBeenCalledWith(homeAssistantAction);
+        });
+
+        it('spustí vlastní příkaz přes CommandProcessor', async () => {
+            const result = await assistantService.processCommand('jak se máš');
+            expect(result).toBe(true);
+            expect(mockCommandProcessor.executeCustomAction).toHaveBeenCalledWith(customAction);
+        });
+    });
+
+    describe('processCommand - intent recognition fallback', () => {
+        beforeEach(() => {
+            mockTtsService.isEnabled = jest.fn(() => true);
+        });
+
+        it('odpoví na otázku na čas, když žádná akce neodpovídá', async () => {
+            const result = await assistantService.processCommand('kolik je hodin');
+            expect(result).toBe(true);
+            expect(mockTtsService.speak).toHaveBeenCalledWith(
+                expect.stringMatching(/Je \d{1,2} hodin a \d{1,2} minut/)
+            );
+        });
+
+        it('nepoužije záměr, když existuje shodná akce', async () => {
+            mockSettingsService.getActions = () => [webhookAction];
+            await assistantService.processCommand('rozsviť světlo');
+            expect(mockTtsService.speak).not.toHaveBeenCalledWith(expect.stringMatching(/Je \d{1,2} hodin/));
+            expect(mockCommandProcessor.executeWebhookAction).toHaveBeenCalled();
+        });
+
+        it('odpoví standardní zprávou pro úplně neznámý příkaz', async () => {
+            const result = await assistantService.processCommand('bláznivý nesmyslný text');
+            expect(result).toBe(false);
+            expect(mockTtsService.speak).toHaveBeenCalledWith('Bohužel jsem nenašel odpovídající akci.');
         });
     });
 

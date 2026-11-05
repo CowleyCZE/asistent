@@ -28,6 +28,10 @@ export class SettingsViewModel extends Observable {
     private _newActionTaskName: string = '';
     private _newActionIftttEvent: string = '';
     private _newActionIftttKey: string = '';
+    private _newActionHaToken: string = '';
+    private _newActionHaService: string = '';
+    private _newActionHaEntity: string = '';
+    private _newActionCustomResponse: string = '';
     private _newActionType: ActionType = 'webhook'; // Výchozí typ
 
     // TTS vlastnosti
@@ -158,6 +162,30 @@ export class SettingsViewModel extends Observable {
     set newActionIftttKey(value: string) {
         this._newActionIftttKey = value;
         this.notifyPropertyChange('newActionIftttKey', value);
+    }
+
+    get newActionHaToken(): string { return this._newActionHaToken; }
+    set newActionHaToken(value: string) {
+        this._newActionHaToken = value;
+        this.notifyPropertyChange('newActionHaToken', value);
+    }
+
+    get newActionHaService(): string { return this._newActionHaService; }
+    set newActionHaService(value: string) {
+        this._newActionHaService = value;
+        this.notifyPropertyChange('newActionHaService', value);
+    }
+
+    get newActionHaEntity(): string { return this._newActionHaEntity; }
+    set newActionHaEntity(value: string) {
+        this._newActionHaEntity = value;
+        this.notifyPropertyChange('newActionHaEntity', value);
+    }
+
+    get newActionCustomResponse(): string { return this._newActionCustomResponse; }
+    set newActionCustomResponse(value: string) {
+        this._newActionCustomResponse = value;
+        this.notifyPropertyChange('newActionCustomResponse', value);
     }
 
     get newActionType(): ActionType { return this._newActionType; }
@@ -314,21 +342,29 @@ export class SettingsViewModel extends Observable {
         this.wakePhrases = updatedPhrases;
     }
 
-    /** Přidá novou akci z formuláře (webhook s URL / tasker s názvem úlohy / ifttt s událostí a klíčem). */
+    /** Přidá novou akci z formuláře (webhook / tasker / ifttt / homeassistant / custom). */
     public addAction() {
         const isWebhookValid = this.newActionType === 'webhook' && this.newActionUrl;
         const isTaskerValid = this.newActionType === 'tasker' && this.newActionTaskName;
         const isIftttValid = this.newActionType === 'ifttt' && this.newActionIftttEvent && this.newActionIftttKey;
+        const isHaValid = this.newActionType === 'homeassistant' && this.newActionUrl
+            && this.newActionHaToken && this.newActionHaService;
+        const isCustomValid = this.newActionType === 'custom' && this.newActionCustomResponse;
 
-        if (this.newActionName && this.newActionPhrase && (isWebhookValid || isTaskerValid || isIftttValid)) {
+        if (this.newActionName && this.newActionPhrase
+            && (isWebhookValid || isTaskerValid || isIftttValid || isHaValid || isCustomValid)) {
             const newAction: Action = {
                 name: this.newActionName,
                 phrase: this.newActionPhrase,
                 type: this.newActionType,
-                url: this.newActionType === 'webhook' ? this.newActionUrl : undefined,
+                url: this.newActionType === 'webhook' || this.newActionType === 'homeassistant' ? this.newActionUrl : undefined,
                 taskName: this.newActionType === 'tasker' ? this.newActionTaskName : undefined,
                 iftttEvent: this.newActionType === 'ifttt' ? this.newActionIftttEvent : undefined,
                 iftttKey: this.newActionType === 'ifttt' ? this.newActionIftttKey : undefined,
+                haToken: this.newActionType === 'homeassistant' ? this.newActionHaToken : undefined,
+                haService: this.newActionType === 'homeassistant' ? this.newActionHaService : undefined,
+                haEntity: this.newActionType === 'homeassistant' ? this.newActionHaEntity : undefined,
+                customResponse: this.newActionType === 'custom' ? this.newActionCustomResponse : undefined,
             };
             this.settingsService.addAction(newAction);
             this.actions = [...this.settingsService.getActions()];
@@ -340,6 +376,10 @@ export class SettingsViewModel extends Observable {
             this.newActionTaskName = '';
             this.newActionIftttEvent = '';
             this.newActionIftttKey = '';
+            this.newActionHaToken = '';
+            this.newActionHaService = '';
+            this.newActionHaEntity = '';
+            this.newActionCustomResponse = '';
         }
     }
 

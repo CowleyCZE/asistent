@@ -18,6 +18,10 @@ export interface ActionLike {
     taskName?: string;
     iftttEvent?: string;
     iftttKey?: string;
+    haToken?: string;
+    haService?: string;
+    haEntity?: string;
+    customResponse?: string;
 }
 
 /** Limity textových polí */
@@ -30,7 +34,10 @@ export const Limits = {
     TASK_NAME_MAX: 64,
     COMMAND_MAX: 500,
     IFTTT_EVENT_MAX: 64,
-    IFTTT_KEY_MAX: 128
+    IFTTT_KEY_MAX: 128,
+    HA_TOKEN_MAX: 512,
+    HA_ENTITY_MAX: 100,
+    CUSTOM_RESPONSE_MAX: 300
 } as const;
 
 export class Validators {
@@ -47,6 +54,18 @@ export class Validators {
      * (bez mezer a speciálních znaků, aby nešlo manipulovat URL).
      */
     public static readonly IFTTT_TOKEN_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+    /**
+     * Regex pro Home Assistant službu - formát "domain.service"
+     * (např. light.turn_on, media_player.play_media).
+     */
+    public static readonly HA_SERVICE_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
+
+    /**
+     * Regex pro entity_id Home Assistant - "domain.name"
+     * (např. light.obyvak, media_player.tv).
+     */
+    public static readonly HA_ENTITY_PATTERN = /^[a-z][a-z0-9_]*\.[a-zA-Z0-9_]+$/;
 
     /** Validuje webhook URL (HTTPS, formát, délka). */
     public static isValidWebhookUrl(url: string | undefined | null): boolean {
@@ -113,12 +132,36 @@ export class Validators {
             if (!Validators.IFTTT_TOKEN_PATTERN.test(iftttKey)) {
                 errors.push('Klíč IFTTT (Maker Webhooks) je povinný (alfanumerické znaky, - a _).');
             }
+        } else if (type === 'homeassistant') {
+            url = Validators.sanitizeText(action?.url, Limits.URL_MAX);
+            if (!Validators.isValidWebhookUrl(url)) {
+                errors.push('URL Home Assistant instance musí být platná HTTPS adresa.');
+            }
+            if (!Validators.sanitizeText(action?.haToken, Limits.HA_TOKEN_MAX)) {
+                errors.push('Long-lived access token Home Assistant je povinný.');
+            }
+            if (!Validators.HA_SERVICE_PATTERN.test(Validators.sanitizeText(action?.haService, Limits.TASK_NAME_MAX))) {
+                errors.push('Služba Home Assistant musí mít formát doména.sluzba (např. light.turn_on).');
+            }
+            const entity = Validators.sanitizeText(action?.haEntity, Limits.HA_ENTITY_MAX);
+            if (entity && !Validators.HA_ENTITY_PATTERN.test(entity)) {
+                errors.push('Entity ID Home Assistant musí mít formát doména.název (např. light.obyvak).');
+            }
+        } else if (type === 'custom') {
+            if (!Validators.sanitizeText(action?.customResponse, Limits.CUSTOM_RESPONSE_MAX)) {
+                errors.push('Vlastní odpověď (TTS) je povinná.');
+            }
         } else {
-            errors.push('Typ akce musí být "webhook", "tasker" nebo "ifttt".');
+            errors.push('Typ akce musí být "webhook", "tasker", "ifttt", "homeassistant" nebo "custom".');
         }
 
+        const haToken = type === 'homeassistant' ? Validators.sanitizeText(action?.haToken, Limits.HA_TOKEN_MAX) : undefined;
+        const haService = type === 'homeassistant' ? Validators.sanitizeText(action?.haService, Limits.TASK_NAME_MAX) : undefined;
+        const haEntity = type === 'homeassistant' ? Validators.sanitizeText(action?.haEntity, Limits.HA_ENTITY_MAX) : undefined;
+        const customResponse = type === 'custom' ? Validators.sanitizeText(action?.customResponse, Limits.CUSTOM_RESPONSE_MAX) : undefined;
+
         return {
-            action: { name, phrase, type, url, taskName, iftttEvent, iftttKey },
+            action: { name, phrase, type, url, taskName, iftttEvent, iftttKey, haToken, haService, haEntity, customResponse },
             result: { valid: errors.length === 0, errors }
         };
     }

@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 4. listopadu 2026 (5. běh, pokračování)
+**Poslední aktualizace:** 5. listopadu 2026 (6. běh)
 **Celkový počet úkolů:** 112
 
 ---
@@ -82,7 +82,7 @@
 - [x] Standardizovat naming konvence (commit c35b805 – kompletní konvence v README, ověřeno proti stavu kódu)
 
 ### Nové chyby
-- [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
+- [x] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba — hotovo: nahrazeny reálnými přehratelnými WAV tóny (start: 587→880 Hz, stop: 880→392 Hz, error: dvojí 233 Hz; 11,025 kHz, 8-bit mono), feedback.service.ts přepnut na .wav, placeholder MP3 smazány (commity 98d1c2b, 11e1820, 3686915)
 - [x] Opravit tisíce chyb webpack buildu ("Cannot read properties of undefined (reading 'module')" u node_modules) – pin webpacku 5.88.2 v package.json, novější webpack (>=5.91) rozbíjí NativeScript sync kontext #nová-chyba
 - [x] Opravit OOM webpack buildu v ns preview na StackBlitzu („Reached heap limit" u ~55 % synchronizace) – devtool=false + parallelism=1 v webpack.config.js, NODE_OPTIONS=--max-old-space-size=2048 v .stackblitzrc #nová-chyba
 - [x] Odebrat použití DOM (document.documentElement) z app.ts a theme.service.ts – v NativeScript runtime DOM neexistuje, aplikace padala při startu v Preview (oprava: motiv přes CSS třídy na kořenovém view) #nová-chyba
@@ -98,7 +98,7 @@
 
 ### UX/UI Vylepšení
 - [x] Přidat responsive layouty (commit 2cdcf5e – media queries v app.css: tablety ≥720dp, malé telefony ≤360dp, landscape)
-- [ ] Testovat na různých zařízeních
+- [ ] Testovat na různých zařízeních #blokováno – vyžaduje fyzická zařízení/emulátor; responsive layouty a high contrast jsou připraveny, potřebné ověřit na hardware
 - [x] Přidat animace pro všechny interakce (commit 2cdcf5e – třída btn-press:active na všech 17 tlačítkách, CSS animace již existovaly)
 - [x] Vytvořit animace utility třídu (commit 2cdcf5e – app/utils/animation.utils.ts: fadeIn/Out, slideIn, pressFeedback, shake, popIn, revealSection)
 - [x] Přidat accessibility labels (commit 2cdcf5e – accessibilityLabel na 24 interaktivních prvcích: tlačítka, switche, slidery, textová pole všech 4 stránek)
@@ -111,23 +111,23 @@
 - [x] Vylepšit wake word detection (commit 6fc9a4a – WakeWordMatcher: normalizace diakritiky, fuzzy shoda po slovech s Levenshtein tolerancí 1 chyby, zpětně kompatibilní podřetězcová shoda, detekce z parciálních výsledků pro rychlejší reakci, 8 unit testů)
 - [x] Přidat automatické zpracování offline queue při obnově připojení
 - [x] Implementovat priority queue pro offline příkazy
-- [ ] Přidat push notifikace (Firebase)
+- [ ] Přidat push notifikace (Firebase) #blokováno – vyžaduje Firebase projekt (google-services.json, FCM klíče), který musí založit vlastník aplikace
 - [x] Implementovat notifikační kanály (commit bbd079b – CHANNELS v NotificationService: success/errors/warnings/info s IMPORTANCE_*, ensureNotificationChannels idempotentní no-op mimo Android ≥26, unit testy)
 
 ### Design
-- [ ] Přidat moderní UI komponenty
-- [ ] Vylepšit barevné schéma
-- [ ] Přidat ikony pro akce
+- [x] Přidat moderní UI komponenty (commit 04452b3 – app.css: card, card-elevated, chip, chip-primary, badge, btn/btn-primary/secondary/success/danger/ghost, input, divider, list-item, fab; motiv-aware přes CSS proměnné)
+- [x] Vylepšit barevné schéma (commit 04452b3 – paleta slate/indigo: světlé i tmavé schéma, sémantické tokeny --success/--danger/--warning/--info, notifikace používají sémantické barvy)
+- [x] Přidat ikony pro akce (commity 04452b3 + 2629acd – unicode ikony na tlačítkách: 🎤/⏹️ Start/Stop, ⚙️ Nastavení/Zpracovat, ➕ Přidat, 🗑️ Odstranit, 🕘 Historie, 📊 Statistiky, 🔊 Test TTS, ⚠️ Offline, 📝/🌐 popisky)
 - [ ] Implementovat Material Design
-- [ ] Přidat světlé/tmavé téma varianty
-- [ ] Implementovat custom téma
+- [x] Přidat světlé/tmavé téma varianty (ověřeno 5. 11. 2026: ThemeService podporuje light/dark/system s detekcí systémového režimu, .dark CSS proměnné v app.css, výběr režimu v Nastavení > Vzhled + přepínač vysokého kontrastu)
+- [ ] Implementovat custom téma (částečně: ThemeService API setPrimaryColor/setAccentColor existuje, ale chybí UI výběr barvy a aplikace vlastních barev v NativeScript runtime – mimo DOM cestu se barvy na view neaplikují)
 
 ### Dokumentace
 - [x] Přidat installation guide do README
 - [x] Přidat usage examples do README
 - [x] Přidat troubleshooting sekci do README
 - [x] Přidat FAQ do README
-- [ ] Přidat screenshots do README
+- [ ] Přidat screenshots do README #blokováno – vyžaduje funkční build na zařízení/emulátoru
 - [x] Generovat API docs z JSDoc (commit níže – typedoc.json entryPoints app/services + app/utils, npm skript `docs`, výstup docs/api v .gitignore)
 - [x] Přidat příklady použití do dokumentace
 - [x] Přidat architecture overview

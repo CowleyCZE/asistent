@@ -245,4 +245,74 @@ export class ThemeService {
     public getBorderClass(): string {
         return this.isDarkMode() ? 'border-gray-600' : 'border-gray-200';
     }
+
+    /* --- Vlastní barvy motivu (P3: Implementovat custom téma) --- */
+
+    /** Paleta výchozích barev pro výběr v Nastavení > Vzhled. */
+    public static readonly COLOR_PALETTE: { label: string; hex: string }[] = [
+        { label: 'Indigo', hex: '#3b82f6' },
+        { label: 'Fialová', hex: '#8b5cf6' },
+        { label: 'Zelená', hex: '#16a34a' },
+        { label: 'Teal', hex: '#0d9488' },
+        { label: 'Oranžová', hex: '#ea580c' },
+        { label: 'Růžová', hex: '#db2777' },
+        { label: 'Červená', hex: '#dc2626' },
+        { label: 'Modrošedá', hex: '#475569' }
+    ];
+
+    /**
+     * Ztmaví hex barvu o zadaný podíl (0–1).
+     * Při neplatném vstupu vrací původní řetězec (bezpečné fallbacky).
+     */
+    public darkenColor(hex: string, amount: number): string {
+        const match = /^#([0-9a-f]{6})$/i.exec((hex ?? '').trim());
+        if (!match || amount < 0 || amount > 1) {
+            return hex;
+        }
+        const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+        const r = clamp(parseInt(match[1].slice(0, 2), 16) * (1 - amount));
+        const g = clamp(parseInt(match[1].slice(2, 4), 16) * (1 - amount));
+        const b = clamp(parseInt(match[1].slice(4, 6), 16) * (1 - amount));
+        const toHex = (v: number) => v.toString(16).padStart(2, '0');
+        return '#' + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    /**
+     * Vygeneruje CSS s konkrétními hodnotami vlastních barev.
+     * NativeScript runtime nepodporuje runtime předefinování CSS proměnných,
+     * proto generujeme explicitní pravidla s konkrétními barvami
+     * (aplikují se přes Page.addCss – pozdější pravidla přebíjejí app.css).
+     */
+    public getCustomColorsCss(): string {
+        const settings = this.getSettings();
+        const primary = settings.primaryColor;
+        const primaryDark = this.darkenColor(primary, 0.15);
+        const accent = settings.accentColor;
+        return [
+            '.btn-primary { background-color: ' + primary + '; }',
+            '.chip-primary { background-color: ' + primary + '; }',
+            '.fab { background-color: ' + primary + '; }',
+            '.btn-primary:active { background-color: ' + primaryDark + '; }',
+            '.btn-ghost { color: ' + primary + '; }',
+            '.accent-text { color: ' + accent + '; }',
+            '.accent-bg { background-color: ' + accent + '; }',
+            ''
+        ].join('\n');
+    }
+
+    /**
+     * Aplikuje kompletní motiv na stránku: CSS třídy motivu na kořenový view
+     * aplikace plus dynamické CSS s vlastními barvami přes Page.addCss.
+     * Volá se v navigatingTo každé stránky.
+     */
+    public applyToPage(page: any): void {
+        this.applyThemeToRootView();
+        try {
+            if (page && typeof page.addCss === 'function') {
+                page.addCss(this.getCustomColorsCss());
+            }
+        } catch (error) {
+            console.error('Chyba při aplikování vlastních barev na stránku:', error);
+        }
+    }
 }

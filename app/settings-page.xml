@@ -170,6 +170,36 @@
                     <Switch checked="{{ highContrast }}" class="mt-1" accessibilityLabel="Vysoký kontrast" />
                     <Label text="Vysoký kontrast" class="text-theme-primary" />
                 </StackLayout>
+
+                <!-- Vlastní barvy (P3: Implementovat custom téma) -->
+                <Label text="Vlastní barvy" class="text-sm font-medium text-theme-secondary mt-4" />
+                <Label text="Primární barva" class="text-xs text-theme-secondary" />
+                <Label text="Aktuální: {{ primaryColor }}" class="text-xs text-theme-secondary" />
+                <ListView items="{{ colorPalette }}" class="mt-1" height="200">
+                    <ListView.itemTemplate>
+                        <GridLayout columns="auto, *" class="p-1">
+                            <Button col="0" width="36" height="36" borderRadius="100"
+                                    backgroundColor="{{ hex }}" tap="{{ $parent.selectPrimaryColor }}"
+                                    accessibilityLabel="Vybrat primární barvu {{ label }}" />
+                            <Label col="1" text="{{ label }}" class="text-theme-primary ml-3"
+                                   verticalAlignment="center" />
+                        </GridLayout>
+                    </ListView.itemTemplate>
+                </ListView>
+
+                <Label text="Akcentová barva" class="text-xs text-theme-secondary mt-3" />
+                <Label text="Aktuální: {{ accentColor }}" class="text-xs text-theme-secondary" />
+                <ListView items="{{ colorPalette }}" class="mt-1" height="200">
+                    <ListView.itemTemplate>
+                        <GridLayout columns="auto, *" class="p-1">
+                            <Button col="0" width="36" height="36" borderRadius="100"
+                                    backgroundColor="{{ hex }}" tap="{{ $parent.selectAccentColor }}"
+                                    accessibilityLabel="Vybrat akcentovou barvu {{ label }}" />
+                            <Label col="1" text="{{ label }}" class="text-theme-primary ml-3"
+                                   verticalAlignment="center" />
+                        </GridLayout>
+                    </ListView.itemTemplate>
+                </ListView>
             </StackLayout>
         </StackLayout>
     </ScrollView>

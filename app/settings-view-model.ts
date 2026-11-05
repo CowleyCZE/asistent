@@ -239,6 +239,48 @@ export class SettingsViewModel extends Observable {
         this.notifyPropertyChange('highContrast', value);
     }
 
+    // Vlastní barvy motivu (P3: Implementovat custom téma)
+    /** Paleta barev pro výběr primární/akcentové barvy v Nastavení > Vzhled. */
+    get colorPalette(): { label: string; hex: string }[] {
+        return ThemeService.COLOR_PALETTE;
+    }
+
+    /** Aktuální primární barva motivu. */
+    get primaryColor(): string {
+        return this.themeService.getPrimaryColor();
+    }
+
+    set primaryColor(value: string) {
+        this.themeService.setPrimaryColor(value);
+        this.notifyPropertyChange('primaryColor', value);
+    }
+
+    /** Aktuální akcentová barva motivu. */
+    get accentColor(): string {
+        return this.themeService.getAccentColor();
+    }
+
+    set accentColor(value: string) {
+        this.themeService.setAccentColor(value);
+        this.notifyPropertyChange('accentColor', value);
+    }
+
+    /** Vybere primární barvu ze vzorníku (args.object.bindingContext = { label, hex }). */
+    public selectPrimaryColor(args: any) {
+        const hex = args?.object?.bindingContext?.hex;
+        if (typeof hex === 'string') {
+            this.primaryColor = hex;
+        }
+    }
+
+    /** Vybere akcentovou barvu ze vzorníku (args.object.bindingContext = { label, hex }). */
+    public selectAccentColor(args: any) {
+        const hex = args?.object?.bindingContext?.hex;
+        if (typeof hex === 'string') {
+            this.accentColor = hex;
+        }
+    }
+
     // Metody pro správu
     /** Přidá aktuálně zadanou frázi do seznamu aktivačních frází. */
     public addPhrase() {

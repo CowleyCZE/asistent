@@ -1,10 +1,8 @@
 name: Build Android APK
 
+# CI/CD se nespousti automaticky (push/PR) - jen manualne pres workflow_dispatch,
+# kdyz je to opravdu potreba ("krajni mez"). Zadne auto-spusteni po commitech.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

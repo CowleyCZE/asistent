@@ -21,24 +21,24 @@ export class FeedbackService {
             console.error('Chyba při vytváření MediaPlayer:', error);
         }
         this.soundsPath = path.join(knownFolders.currentApp().path, 'assets', 'sounds');
-        
+
         // Register for cleanup on app exit
         serviceRegistry.register(this);
     }
 
-    /** Přehraje zvuk začátku poslechu (start.mp3). */
+    /** Přehraje zvuk začátku poslechu (start.wav). */
     public async playStartSound() {
-        await this.playSound('start.mp3');
+        await this.playSound('start.wav');
     }
 
-    /** Přehraje zvuk ukončení poslechu (stop.mp3). */
+    /** Přehraje zvuk ukončení poslechu (stop.wav). */
     public async playStopSound() {
-        await this.playSound('stop.mp3');
+        await this.playSound('stop.wav');
     }
 
-    /** Přehraje chybový zvuk (error.mp3). */
+    /** Přehraje chybový zvuk (error.wav). */
     public async playErrorSound() {
-        await this.playSound('error.mp3');
+        await this.playSound('error.wav');
     }
 
     private async playSound(filename: string) {
@@ -56,18 +56,18 @@ export class FeedbackService {
             }
 
             const soundPath = path.join(this.soundsPath, filename);
-            
+
             // Zastavíme a uvolníme předchozí přehrávač
             if (this.player.isPlaying()) {
                 this.player.stop();
             }
             this.player.reset();
-            
+
             // Načteme zvukový soubor
             const file = File.fromPath(soundPath);
             const fd = new java.io.FileInputStream(file.path);
             this.player.setDataSource(fd.getFD());
-            
+
             // Připravíme přehrávač
             await new Promise<void>((resolve, reject) => {
                 this.player.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener({
@@ -75,7 +75,7 @@ export class FeedbackService {
                         resolve();
                     }
                 }));
-                
+
                 this.player.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener({
                     onError: (mp: any, what: any, extra: any) => {
                         console.error('Chyba při přehrávání zvuku:', filename, what, extra);
@@ -83,13 +83,13 @@ export class FeedbackService {
                         return true;
                     }
                 }));
-                
+
                 this.player.prepareAsync();
             });
-            
+
             // Přehrajeme zvuk
             this.player.start();
-            
+
             // Počkáme na dokončení
             await new Promise<void>((resolve) => {
                 this.player.setOnCompletionListener(new android.media.MediaPlayer.OnCompletionListener({
@@ -99,7 +99,7 @@ export class FeedbackService {
                     }
                 }));
             });
-            
+
         } catch (error) {
             console.error('Chyba při přehrávání zvuku:', filename, error);
         }

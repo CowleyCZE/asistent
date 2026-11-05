@@ -53,4 +53,71 @@ describe('SpeechRecognitionService', () => {
             expect.objectContaining({ eventName: 'speechResult', text: 'ahoj' })
         );
     });
+
+    describe('wake word chybová smyčka (P1)', () => {
+        it('fatální chyba (permissions/busy/client) zastaví detekci a nahlásí speechError', () => {
+            const handler = jest.fn();
+            service.on('speechError', handler);
+            (service as any).continuousListening = true;
+            (service as any).isListening = true;
+
+            // ERROR_INSUFFICIENT_PERMISSIONS = 9 (fatální)
+            (service as any).handleWakeWordError(9);
+
+            expect((service as any).continuousListening).toBe(false);
+            expect(handler).toHaveBeenCalledWith(
+                expect.objectContaining({ eventName: 'speechError', error: 9 })
+            );
+        });
+
+        it('překročení limitu chyb v řadě zastaví detekci (backoff nesmí být nekonečný)', () => {
+            jest.useFakeTimers();
+            const handler = jest.fn();
+            service.on('speechError', handler);
+            (service as any).continuousListening = true;
+            (service as any).isListening = true;
+
+            // ERROR_NO_MATCH = 7 (benigní) × 6 → nad limit 5
+            for (let i = 0; i < 6; i++) {
+                (service as any).handleWakeWordError(7);
+            }
+
+            expect((service as any).continuousListening).toBe(false);
+            expect(handler).toHaveBeenCalled();
+            jest.useRealTimers();
+        });
+
+        it('restart po benigní chybě používá exponenciální backoff', () => {
+            jest.useFakeTimers();
+            (service as any).continuousListening = true;
+            (service as any).isListening = true;
+
+            (service as any).handleWakeWordError(7); // 1. chyba → 1000 ms
+            expect((service as any).retryTimer).toBeDefined();
+            jest.advanceTimersByTime(1000);
+
+            // Timer vypršel, ale bez recognizeru se restart neprovede – smyčka nebeží dál
+            expect((service as any).retryTimer).toBeUndefined();
+
+            (service as any).handleWakeWordError(7); // 2. chyba → 2000 ms
+            jest.advanceTimersByTime(1000);
+            expect((service as any).retryTimer).toBeDefined(); // ještě čeká
+            jest.useRealTimers();
+        });
+
+        it('stopListening zruší naplánovaný restart poslechu', () => {
+            jest.useFakeTimers();
+            const recognizer = { stopListening: jest.fn(), destroy: jest.fn() };
+            (service as any).speechRecognizer = recognizer;
+            (service as any).continuousListening = true;
+            (service as any).isListening = true;
+
+            (service as any).handleWakeWordError(7);
+            expect((service as any).retryTimer).toBeDefined();
+
+            service.stopListening();
+            expect((service as any).retryTimer).toBeUndefined();
+            jest.useRealTimers();
+        });
+    });
 });

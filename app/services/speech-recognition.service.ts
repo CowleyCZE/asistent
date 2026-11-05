@@ -14,6 +14,24 @@ export class SpeechRecognitionService extends Observable {
     private continuousListening: boolean = false;
     private continuousMode: boolean = false; // automatický restart poslechu po každém výsledku
 
+    // --- Ochrana proti nekonečné chybové smyčce v wake word detekci ---
+    /** Počet chyb v řadě bez úspěšného výsledku. */
+    private consecutiveErrors: number = 0;
+    /** Timer naplánovaného restartu poslechu (aby šel zrušit při stop/dispose). */
+    private retryTimer: any = undefined;
+
+    /** Maximální počet chyb v řadě, než se wake word detekce zastaví. */
+    private static readonly MAX_CONSECUTIVE_ERRORS = 5;
+    /** Základní zpoždění restartu poslechu po chybě (ms). */
+    private static readonly BASE_RETRY_DELAY_MS = 1000;
+    /** Maximální zpoždění restartu (exponenciální backoff je omezen) (ms). */
+    private static readonly MAX_RETRY_DELAY_MS = 30000;
+    /**
+     * Chyby, po kterých nemá smysl restartovat poslech:
+     * 5 = ERROR_CLIENT, 8 = ERROR_RECOGNIZER_BUSY, 9 = ERROR_INSUFFICIENT_PERMISSIONS.
+     */
+    private static readonly FATAL_ERRORS: number[] = [5, 8, 9];
+
     constructor() {
         super();
         this.settingsService = new SettingsService();
@@ -42,6 +60,8 @@ export class SpeechRecognitionService extends Observable {
             
             const recognitionListener = new android.speech.RecognitionListener({
                 onResults: (results: any) => {
+                    // Úspěšný výsledek resetuje počítadlo chyb
+                    this.consecutiveErrors = 0;
                     const matches = results.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
                     if (matches && matches.size() > 0) {
                         const recognizedText = matches.get(0);
@@ -85,8 +105,7 @@ export class SpeechRecognitionService extends Observable {
                     // aby bylo možné poslech restartovat.
                     this.isListening = false;
                     if (this.continuousListening) {
-                        // Při chybě v detekci wake word znovu spustíme poslech
-                        setTimeout(() => this.startWakeWordDetection(), 1000);
+                        this.handleWakeWordError(error);
                     } else {
                         this.notify({
                             eventName: 'speechError',
@@ -106,6 +125,7 @@ export class SpeechRecognitionService extends Observable {
                                 const wakePhrases = this.settingsService.getSettings().wakePhrases;
                                 // Rychlejší detekce: wake word poznáme už z parciálního výsledku
                                 if (WakeWordMatcher.matches(partialText, wakePhrases)) {
+                                    this.consecutiveErrors = 0;
                                     this.stopListening();
                                     this.notify({
                                         eventName: 'wakeWordDetected',
@@ -135,6 +155,84 @@ export class SpeechRecognitionService extends Observable {
 
             this.speechRecognizer.setRecognitionListener(recognitionListener);
         }
+    }
+
+    /**
+     * Ošetření chyby v režimu detekce wake word.
+     *
+     * Dřívější chování (okamžitý restart po 1 s bez limitu) vedlo
+     * u trvalých chyb (RECOGNIZER_BUSY, INSUFFICIENT_PERMISSIONS apod.)
+     * k tiché nekonečné smyčce a drenži baterie.
+     *
+     * Nyní platí:
+     * - fatální chyby (client/busy/permissions) smyčku rovnou zastaví
+     *   a chybu nahlásí odběratelům (speechError),
+     * - ostatní chyby se restartují s exponenciálním backoffem
+     *   (1 s, 2 s, 4 s, 8 s, 16 s… max 30 s),
+     * - po MAX_CONSECUTIVE_ERRORS chybách v řadě se detekce zastaví.
+     */
+    private handleWakeWordError(error: number): void {
+        this.consecutiveErrors++;
+
+        const isFatal = SpeechRecognitionService.FATAL_ERRORS.indexOf(error) !== -1;
+        if (isFatal) {
+            console.warn(`Wake word detekce zastavena – fatální chyba SpeechRecognizeru (${error}).`);
+            this.stopWakeWordDetection();
+            this.notify({
+                eventName: 'speechError',
+                object: this,
+                error: error
+            });
+            return;
+        }
+
+        if (this.consecutiveErrors > SpeechRecognitionService.MAX_CONSECUTIVE_ERRORS) {
+            console.warn(
+                `Wake word detekce zastavena – ${this.consecutiveErrors - 1} chyb v řadě (poslední: ${error}).`
+            );
+            this.stopWakeWordDetection();
+            this.notify({
+                eventName: 'speechError',
+                object: this,
+                error: error
+            });
+            return;
+        }
+
+        // Exponenciální backoff: 1s, 2s, 4s, 8s, 16s … max 30s
+        const delay = Math.min(
+            SpeechRecognitionService.BASE_RETRY_DELAY_MS * Math.pow(2, this.consecutiveErrors - 1),
+            SpeechRecognitionService.MAX_RETRY_DELAY_MS
+        );
+        console.warn(
+            `Chyba wake word detekce (${error}), pokus ${this.consecutiveErrors}/${SpeechRecognitionService.MAX_CONSECUTIVE_ERRORS} – restart za ${delay} ms.`
+        );
+
+        this.cancelRetryTimer();
+        this.retryTimer = setTimeout(() => {
+            this.retryTimer = undefined;
+            // Restart jen pokud je stále aktivní režim detekce wake word
+            // (mezitím mohl přijít stopListening/startListening).
+            if (this.continuousListening) {
+                this.startWakeWordDetection();
+            }
+        }, delay);
+    }
+
+    /** Zruší naplánovaný restart poslechu. */
+    private cancelRetryTimer(): void {
+        if (this.retryTimer !== undefined) {
+            clearTimeout(this.retryTimer);
+            this.retryTimer = undefined;
+        }
+    }
+
+    /** Zastaví režim detekce wake word včetně čekajícího restartu. */
+    private stopWakeWordDetection(): void {
+        this.continuousListening = false;
+        this.isListening = false;
+        this.consecutiveErrors = 0;
+        this.cancelRetryTimer();
     }
 
     /** Zapne nebo vypne kontinuální režim – poslech se po každém výsledku automaticky restartuje. */
@@ -198,6 +296,7 @@ export class SpeechRecognitionService extends Observable {
             this.speechRecognizer.stopListening();
             this.isListening = false;
             this.continuousListening = false;
+            this.cancelRetryTimer();
         }
     }
 
@@ -210,6 +309,7 @@ export class SpeechRecognitionService extends Observable {
 
     /** Kompletní úklid – zastaví poslech a zničí recognizer. */
     public dispose(): void {
+        this.cancelRetryTimer();
         this.stopListening();
         this.destroy();
     }

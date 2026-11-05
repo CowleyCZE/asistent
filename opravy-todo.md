@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (11. běh – opraveny 4 P1 chyby: IFTTT akce se neukládají do offline fronty; dvojité navyšování pokusů v OfflineService; odstraněna cache webhook/IFTTT/HA odpovědí blokující opakované spuštění akce; timeout a cleanup listeneru v PermissionsService)
+**Poslední aktualizace:** 5. listopadu 2026 (12. běh – opraveny zbývající 2 P1 chyby: wake word smyčka s exponenciálním backoffem, limitem 5 chyb v řadě a stopem u fatálních chyb; TTS speak() nyní používá připojený UtteranceProgressListener, unikátní utteranceId a čeká na skutečné dokončení řeči. P1 je tím vyčerpáno.)
 **Dokument pročištěn:** dokončené úkoly odstraněny (archiv ve starších commitech), zůstávají pouze otevřené a nově nalezené chyby.
 
 ---
@@ -15,8 +15,7 @@
 ## P1 - DŮLEŽITÉ (Vysoká priorita) #nové-chyby
 
 ### Chyby v kódu
-- [ ] **Wake word smyčka bez omezení chyb** – `onError` v continuousListening režimu automaticky restartuje poslech po 1 s bez ohledu na typ chyby a bez maximálního počtu pokusů/backoffu (trvalá chyba jako RECOGNIZER_BUSY nebo INSUFFICIENT_PERMISSIONS → tichá nekonečná smyčka, drenž baterie). #nová-chyba
-- [ ] **TTS speak(): listener nepřipojen a předčasné resolve** – `UtteranceProgressListener` se vytvoří, ale nikdy nepřipojí přes `setOnUtteranceProgressListener`; `resolve(true)` se volá okamžitě po `speak()`, takže promise nečeká dokončení řeči; všichni používají pevné `'utterance_id'`. Následek: překrývání/míchání TTS odpovědí a nespolehlivé await. #nová-chyba
+*(žádné otevřené – poslední 2 P1 opraveny v 12. běhu: wake word chybová smyčka s backoffem a limitem; TTS speak() listener a unikátní utteranceId. Dříve: 4 opraveny v 11. běhu; isOnline/offline detekce v 10. běhu)*
 
 ---
 
@@ -76,11 +75,11 @@
 ## STATISTIKA
 
 - P0 (Kritické): 0 (2 opraveny v 10. běhu)
-- P1 (Důležité): 2 otevřené (1 opravena v 10. běhu: isOnline/offline detekce; 4 opraveny v 11. běhu)
+- P1 (Důležité): 0 (poslední 2 opraveny v 12. běhu; 4 v 11. běhu; isOnline v 10. běhu)
 - P2 (Střední): 5 otevřených
 - P3 (Nízké): 3 blokované
 - P4 (Dlouhodobé): 18 úkolů
-- **Celkem otevřeno: 28**
+- **Celkem otevřeno: 26**
 
 ---
 

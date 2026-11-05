@@ -18,6 +18,15 @@ export class TextToSpeechService {
     private ttsEngine: any = null;
     private isInitialized: boolean = false;
 
+    /** Čekající promises pro právě čtené utterance (id → resolve). */
+    private pendingUtterances: Map<string, (success: boolean) => void> = new Map();
+    /** Počítadlo pro unikátní utterance ID. */
+    private utteranceCounter: number = 0;
+    /** Bezpečnostní rezerva k odhadu délky čtení (ms). */
+    private static readonly SPEAK_TIMEOUT_BASE_MS = 10000;
+    /** Odhad čtení na znak textu (ms). */
+    private static readonly SPEAK_TIMEOUT_PER_CHAR_MS = 120;
+
     constructor() {
         this.settingsService = new SettingsService();
         this.initialize();
@@ -67,9 +76,59 @@ export class TextToSpeechService {
 
             // Set volume (not directly supported, but we can use audio stream volume)
             // For simplicity, we'll use the default audio stream
+
+            // Připojíme progress listener – bez něj speak() nemůže
+            // rozpoznat dokončení/chybu čtení (viz speak()).
+            this.attachProgressListener();
         } catch (error) {
             console.error('Error setting TTS config:', error);
         }
+    }
+
+    /**
+     * Připojí UtteranceProgressListener k TTS enginu.
+     *
+     * Dříve se listener vytvářel lokálně v speak(), ale nikdy se
+     * nepřipojil přes setOnUtteranceProgressListener – callbacky
+     * (onDone/onError) tedy nikdy neodpálily a promise se řešil
+     * okamžitě po volání speak(). Nyní jeden listener směruje
+     * události podle utteranceId k čekajícím promises.
+     */
+    private attachProgressListener(): void {
+        if (!this.ttsEngine || !this.isInitialized) {
+            return;
+        }
+        try {
+            const listener = new android.speech.tts.UtteranceProgressListener({
+                onStart: (utteranceId: string) => {},
+                onDone: (utteranceId: string) => {
+                    this.finishUtterance(utteranceId, true);
+                },
+                onError: (utteranceId: string) => {
+                    this.finishUtterance(utteranceId, false);
+                }
+            });
+            this.ttsEngine.setOnUtteranceProgressListener(listener);
+        } catch (error) {
+            console.error('Chyba při připojování UtteranceProgressListener:', error);
+        }
+    }
+
+    /** Vyřeší čekající promise pro dané utteranceId. */
+    private finishUtterance(utteranceId: string, success: boolean): void {
+        const resolve = this.pendingUtterances.get(utteranceId);
+        if (resolve) {
+            this.pendingUtterances.delete(utteranceId);
+            resolve(success);
+        }
+    }
+
+    /** Vyřeší všechny čekající promises (přerušení čtení). */
+    private flushPendingUtterances(success: boolean): void {
+        for (const [id, resolve] of this.pendingUtterances) {
+            resolve(success);
+        }
+        this.pendingUtterances.clear();
     }
 
     /** Vrací aktuální konfiguraci TTS. */
@@ -135,37 +194,73 @@ export class TextToSpeechService {
         this.saveConfig({ volume: Math.max(0.0, Math.min(1.0, volume)) });
     }
 
-    /** Přečte text nahlas.
-     * @returns true, pokud bylo čtení úspěšně zahájeno. */
+    /**
+     * Přečte text nahlas.
+     *
+     * Promise se nyní vyřeší až po skutečném dokončení (nebo chybě)
+     * čtení – dříve se resolve(true) volal okamžitě po speak(), takže
+     * volající (např. AssistantService.speakSafely) nečekal konec řeči
+     * a odpovědi se překrývaly. Události se rozlišují podle unikátního
+     * utteranceId (dříve pevný řetězec pro všechna čtení).
+     *
+     * Obsahuje pojistný timeout (odhad délky čtení + rezerva),
+     * aby promise nikdy nezůstal viset, když TTS engine nedorazí
+     * žádnou událost.
+     *
+     * @returns true, pokud bylo čtení dokončeno bez chyby.
+     */
     public async speak(text: string): Promise<boolean> {
         if (!this.getConfig().enabled || !this.isInitialized || !this.ttsEngine) {
             return false;
         }
 
-        return new Promise((resolve) => {
+        const utteranceId = 'asistent_utt_' + Date.now() + '_' + (++this.utteranceCounter);
+
+        return new Promise<boolean>((resolve) => {
+            let settled = false;
+            let timer: any = undefined;
+
+            const finish = (success: boolean) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                if (timer !== undefined) {
+                    clearTimeout(timer);
+                    timer = undefined;
+                }
+                this.pendingUtterances.delete(utteranceId);
+                resolve(success);
+            };
+
+            this.pendingUtterances.set(utteranceId, finish);
+
             try {
                 const queueMode = android.speech.tts.TextToSpeech.QUEUE_FLUSH;
                 const params = new android.os.Bundle();
-                
+
                 // Set stream type for volume control
-                params.putInt(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_STREAM, 
+                params.putInt(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_STREAM,
                     android.media.AudioManager.STREAM_MUSIC);
 
-                const callback = new android.speech.tts.UtteranceProgressListener({
-                    onStart: (utteranceId: string) => {},
-                    onDone: (utteranceId: string) => {
-                        resolve(true);
-                    },
-                    onError: (utteranceId: string) => {
-                        resolve(false);
-                    }
-                });
+                // Pojistný timeout – TTS engine nemusí doručit žádnou událost
+                // (např. při vypnutí enginu nebo chybném utteranceId).
+                const timeoutMs = TextToSpeechService.SPEAK_TIMEOUT_BASE_MS +
+                    text.length * TextToSpeechService.SPEAK_TIMEOUT_PER_CHAR_MS;
+                timer = setTimeout(() => {
+                    console.warn(`TTS čtení "${utteranceId}" vypršelo (timeout ${timeoutMs} ms).`);
+                    finish(false);
+                }, timeoutMs);
 
-                this.ttsEngine.speak(text, queueMode, params, 'utterance_id');
-                resolve(true);
+                // speak() vrací 0 (SUCCESS) při zařazení do fronty
+                const queued = this.ttsEngine.speak(text, queueMode, params, utteranceId);
+                if (queued !== 0) {
+                    // Nepodařilo se ani zařadit do fronty – neregistrujeme se na události.
+                    finish(false);
+                }
             } catch (error) {
                 console.error('Error speaking text:', error);
-                resolve(false);
+                finish(false);
             }
         });
     }
@@ -190,6 +285,9 @@ export class TextToSpeechService {
                 console.error('Error stopping TTS:', error);
             }
         }
+        // Čekající promises se vyřeší jako přerušené – TTS po stop()
+        // nemusí pro všechna utterance doručit onError.
+        this.flushPendingUtterances(false);
     }
 
     /** Ukončí TTS engine. */

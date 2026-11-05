@@ -111,8 +111,8 @@ Pokud chcete přispět do projektu nebo si aplikaci sami sestavit, postupujte po
 
 1.  **Klonování repozitáře:**
     ```bash
-    git clone https://github.com/TestujuJa/CZE-asistent.git
-    cd CZE-asistent
+    git clone https://github.com/CowleyCZE/asistent.git
+    cd asistent
     ```
 
 2.  **Instalace závislostí:**
@@ -142,7 +142,7 @@ Pokud chcete přispět do projektu nebo si aplikaci sami sestavit, postupujte po
 
 [Edit in StackBlitz ⚡️][def]
 
-[def]: https://stackblitz.com/~/github.com/TestujuJa/CZE-asistent
+[def]: https://stackblitz.com/~/github.com/CowleyCZE/asistent
 
 
 ---
@@ -174,6 +174,33 @@ ns run android
 ```
 
 > 💡 **API klíče:** Webhook klíče a další tajemství se konfigurují přes GitHub Secrets v CI (viz `.github/SECRETS.md`). Do repozitře nikdy nevkládejte reálné klíče.
+
+### 📱 Rychlé vyzkoušení bez buildu: `ns preview`
+
+Nejrychlejší způsob, jak aplikaci spustit, je **preview na telefonu** – nepotřebujete Android SDK ani kabel:
+
+```bash
+npm install        # pokud ještě nebyly nainstalovány závislosti
+ns preview         # ekvivalentně: npm start / npm run preview
+```
+
+CLI vytvoří JavaScript bundle, spustí lokální server a v terminálu zobrazí **QR kód**:
+
+1. Nainstalujte aplikaci **NativeScript Preview** z Google Play na telefon.
+2. Telefon a počítač musí být na **stejné síti** (preview se synchronizuje přes IP/port).
+3. Naskenujte QR kód – aplikace se spustí; změny kódu se následně synchronizují automaticky (HMR).
+
+> Pozn.: Preview aplikace obsahuje plný Android runtime, takže aplikace umí vyžádat oprávnění k mikrofonu, přehrávat zvuky a volat webhooky. Pro plnohodnotné testování (Tasker, notifikace na uzamčené obrazovce) ale doporučujeme `ns run android`, které vytvoří kompletní APK.
+
+### 🤔 Je StackBlitz potřeba?
+
+**Ne.** StackBlitz je pouze online alternativa k lokálnímu vývoji – projekt lze spustit v prohlížeči přes WebContainer, bez instalace čehokoli (tlačítko *Edit in StackBlitz* níže). Soubory `.stackblitzrc`, `setup-nativescript-stackblitz`, `install_nvm.sh` a paměťová ladění v `webpack.config.js` (`devtool = false`, `parallelism = 1`) slouží **pouze** této online cestě; lokálně je CLI ignoruje a stačí Node.js 18+ a `npm install -g nativescript`.
+
+| Prostředí | Co potřebujete | Příkaz |
+| --- | --- | --- |
+| Lokálně, preview | Node.js 18+, NativeScript CLI, aplikace NS Preview na telefonu | `ns preview` |
+| Lokálně, plný běh | navíc Android SDK + zařízení/emulátor s USB laděním | `ns run android` |
+| StackBlitz (online) | jen prohlížeč a telefon s aplikací NS Preview | `npm start` (spustí `.stackblitzrc`) |
 
 ## 🚀 Příklady použití
 
@@ -283,6 +310,7 @@ CI (GitHub Actions, `.github/workflows/build.yml`) na každý push do `main`:
 | Tasker úlohy se nespouštějí | Tasker musí být nainstalovaný a povolený *External Access*; aplikace to detekuje přes `isTaskerInstalled()`. |
 | Notifikace se nezobrazují | Zkontrolujte, že notifikace jsou povolené v nastavení aplikace i systému Android. |
 | Offline fronta se nezpracuje | Přejde automaticky při obnově připojení (do 30 s), nebo ručně tlačítkem „Zpracovat" na hlavní obrazovce. |
+| `ns preview` – telefon se nepřipojí | Telefon a počítač musí být na stejné síti (firewall/VPN může blokovat port); zkuste `ns preview --no-hmr`, případně ručně zadejte adresu z terminálu do NS Preview aplikace. |
 | Testy padají na mock @nativescript/core | Mocky jsou v `tests/mocks/nativescript-core.mock.ts` – nové exporty přidejte tam i do `tests/setup.ts`. |
 
 ## ❓ FAQ

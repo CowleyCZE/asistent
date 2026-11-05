@@ -83,6 +83,7 @@
 
 ### Nové chyby
 - [ ] Nahradit placeholder MP3 soubory v app/assets/sounds/ reálnými zvukovými soubory (nyní 79–90 B, nejsou přehratelné) #nová-chyba
+- [x] Opravit OOM webpack buildu v ns preview na StackBlitzu („Reached heap limit" u ~55 % synchronizace) – devtool=false + parallelism=1 v webpack.config.js, NODE_OPTIONS=--max-old-space-size=2048 v .stackblitzrc #nová-chyba
 - [x] Odebrat použití DOM (document.documentElement) z app.ts a theme.service.ts – v NativeScript runtime DOM neexistuje, aplikace padala při startu v Preview (oprava: motiv přes CSS třídy na kořenovém view) #nová-chyba
 - [x] SpeechRecognitionService nespouštět wake word detekci v konstruktoru bez oprávnění (chybová smyčka), použít createSpeechRecognizer + isRecognitionAvailable, reset isListening v onError #nová-chyba
 - [x] PermissionsService: statický přístup k android.Manifest při importu modulu (crash) + neexistující android.support.v4 (nahrazeno androidx s fallbacky a lazy přístupem) #nová-chyba

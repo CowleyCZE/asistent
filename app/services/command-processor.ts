@@ -594,10 +594,40 @@ export class CommandProcessor implements ICommandProcessor {
         return fetchOptions;
     }
 
+    /**
+     * Vypočítá HMAC-SHA256 podpis hexadecimálně.
+     *
+     * POZOR: Node.js modul `crypto` v NativeScript Android runtime
+     * neexistuje (`require('crypto')` shodí aplikaci) – používáme
+     * tedy Android/Java API `javax.crypto.Mac` (HmacSHA256).
+     * Na runtime bez Java API (testy) vrací prázdný řetězec a zaloguje varování.
+     */
     private generateHmacSignature(message: string, secret: string): string {
-        const crypto = require('crypto');
-        const hmac = crypto.createHmac('sha256', secret);
-        hmac.update(message);
-        return hmac.digest('hex');
+        const g: any = global;
+        const Mac = g?.javax?.crypto?.Mac;
+        const SecretKeySpec = g?.javax?.crypto?.spec?.SecretKeySpec;
+        const JString = g?.java?.lang?.String;
+
+        if (!Mac || !SecretKeySpec || !JString) {
+            console.warn('HMAC podpis není dostupný – chybí javax.crypto API v tomto runtime.');
+            return '';
+        }
+
+        try {
+            const mac = Mac.getInstance('HmacSHA256');
+            mac.init(new SecretKeySpec(new JString(secret).getBytes('UTF-8'), 'HmacSHA256'));
+            const result = mac.doFinal(new JString(message).getBytes('UTF-8'));
+
+            // Bajty -> hex řetězec
+            let hex = '';
+            for (let i = 0; i < result.length; i++) {
+                const b = result[i] & 0xff;
+                hex += (b < 16 ? '0' : '') + b.toString(16);
+            }
+            return hex;
+        } catch (error) {
+            console.error('Chyba při výpočtu HMAC podpisu:', error);
+            return '';
+        }
     }
 }

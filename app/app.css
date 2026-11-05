@@ -468,3 +468,103 @@
 .dark.high-contrast .text-theme-secondary {
     color: #ffffff;
 }
+
+/* ============================================
+   MATERIAL DESIGN (P3)
+   Material Design 3 styl: elevace (úrovně 1-5),
+   shape scale, typografická škála a state layers
+   (ripple náhrada přes :active). Pozdější pravidla
+   přebíjejí výchozí komponenty výše.
+   ============================================ */
+
+/* --- Elevation levels (MD3: level 1-5) --- */
+.md-elevation-1 {
+    box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+.md-elevation-2 {
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.md-elevation-3 {
+    box-shadow: 0 4px 8px var(--shadow-color-strong);
+}
+
+.md-elevation-4 {
+    box-shadow: 0 8px 16px var(--shadow-color-strong);
+}
+
+.md-elevation-5 {
+    box-shadow: 0 12px 24px var(--shadow-color-strong);
+}
+
+/* --- Shape scale (MD3 corner radius) --- */
+.md-shape-xs { border-radius: 4; }
+.md-shape-s { border-radius: 8; }
+.md-shape-m { border-radius: 12; }
+.md-shape-l { border-radius: 16; }
+.md-shape-xl { border-radius: 28; }
+.md-shape-full { border-radius: 100; }
+
+/* --- Typografická škála (MD3) --- */
+.md-display { font-size: 45; font-weight: 700; }
+.md-headline { font-size: 28; font-weight: 600; }
+.md-title { font-size: 18; font-weight: 600; }
+.md-body { font-size: 14; font-weight: 400; }
+.md-label { font-size: 12; font-weight: 600; letter-spacing: 0.5; }
+
+/* --- MD3 upgrady stávajících komponent ---
+   Karty: větší radius + elevace level 1;
+   tlačítka: plně zaoblená (full-pill), state layer :active;
+   chip: zaoblený roh (MD3 chip);
+   FAB: nižší radius (MD3 default FAB). */
+.card {
+    border-radius: 16;
+    box-shadow: 0 1px 3px var(--shadow-color);
+    border-width: 0;
+}
+
+.card-elevated {
+    border-radius: 16;
+    box-shadow: 0 6px 12px var(--shadow-color-strong);
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger {
+    border-radius: 100;
+    letter-spacing: 0.5;
+    text-transform: uppercase;
+    font-size: 13;
+}
+
+/* State layer: MD ripple náhrada pro hlavní tlačítka */
+.btn-primary:active,
+.btn-success:active,
+.btn-danger:active {
+    opacity: 0.88;
+}
+
+.chip,
+.chip-primary {
+    border-radius: 8;
+    font-weight: 600;
+}
+
+.fab {
+    border-radius: 16;
+    box-shadow: 0 6px 12px var(--shadow-color-strong);
+}
+
+.fab:active {
+    opacity: 0.9;
+}
+
+/* Switch/Slider MD akcent (NativeScript používá systémové Akzent-barvy;
+   zustává na android systemImage tint) - zvýraznění aktivního stavu textu */
+.active-text {
+    color: var(--primary-color);
+    font-weight: 600;
+}

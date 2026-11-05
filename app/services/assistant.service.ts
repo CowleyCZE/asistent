@@ -1,3 +1,4 @@
+import { Application } from '@nativescript/core';
 import { Action, SettingsService } from './settings.service';
 import { TaskerService } from './tasker.service';
 import { HistoryService } from './history.service';
@@ -196,16 +197,43 @@ export class AssistantService implements IAssistantService {
         }
     }
 
+    /**
+     * Zjistí dostupnost internetového připojení.
+     *
+     * Context se bere z `Application.android.context` (global `android.context`
+     * neexistuje). Preferujeme moderní API `getActiveNetwork()` +
+     * `getNetworkCapabilities()` (getActiveNetworkInfo je deprecated);
+     * na starších verzích Androidu fallback na getActiveNetworkInfo.
+     */
     private isOnline(): boolean {
         try {
-            const g: any = global;
-            if (g.android) {
-                const connectivityManager = g.android.context?.getSystemService(
-                    g.android.context?.CONNECTIVITY_SERVICE
-                );
+            const androidApp = (Application as any).android;
+            const context = androidApp?.context;
+            if (context) {
+                const connectivityManager = context.getSystemService(context.CONNECTIVITY_SERVICE);
                 if (connectivityManager) {
-                    const networkInfo = connectivityManager.getActiveNetworkInfo();
-                    return networkInfo != null && networkInfo.isConnected();
+                    const g: any = global;
+                    const NetworkCapabilities = g?.android?.net?.NetworkCapabilities;
+
+                    // Moderní API (Android 6+)
+                    if (
+                        NetworkCapabilities &&
+                        typeof connectivityManager.getActiveNetwork === 'function' &&
+                        typeof connectivityManager.getNetworkCapabilities === 'function'
+                    ) {
+                        const network = connectivityManager.getActiveNetwork();
+                        if (!network) {
+                            return false;
+                        }
+                        const capabilities = connectivityManager.getNetworkCapabilities(network);
+                        return !!capabilities &&
+                            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+                    }
+
+                    // Fallback pro starší Android (deprecated, ale funkční)
+                    const networkInfo = connectivityManager.getActiveNetworkInfo?.();
+                    return !!networkInfo && networkInfo.isConnected();
                 }
             }
             // Fallback - assume online if we can't check

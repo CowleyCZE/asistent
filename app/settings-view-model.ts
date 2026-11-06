@@ -2,6 +2,7 @@ import { Observable, Frame } from '@nativescript/core';
 import { SettingsService, Action, ActionType } from './services/settings.service';
 import { TextToSpeechService } from './services/text-to-speech.service';
 import { ThemeService } from './services/theme.service';
+import { serviceLocator, ServiceTokens } from './services/service-locator';
 
 /**
  * View-model stránky nastavení.
@@ -60,7 +61,9 @@ export class SettingsViewModel extends Observable {
         super();
         this.settingsService = new SettingsService();
         this.ttsService = new TextToSpeechService();
-        this.themeService = new ThemeService();
+        // ThemeService ze serviceLocatoru (singleton) – sdílená instance
+        // s app.ts a main-page, dříve nezávislá `new ThemeService()`.
+        this.themeService = serviceLocator.get<ThemeService>(ServiceTokens.ThemeService);
         this.loadSettings();
         this.loadAvailableLanguages();
     }
@@ -433,4 +436,5 @@ export class SettingsViewModel extends Observable {
         this.currentThemeMode = mode;
     }
 }
+
 

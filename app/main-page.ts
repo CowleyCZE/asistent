@@ -2,6 +2,7 @@ import { EventData, Page } from '@nativescript/core';
 import { KeyboardNavigationHelper } from './utils/keyboard-navigation.utils';
 import { MainViewModel } from './main-view-model';
 import { ThemeService } from './services/theme.service';
+import { serviceLocator, ServiceTokens } from './services/service-locator';
 
 // Lazy loading – view-model se vytvoří až při první navigaci
 // a další navigace používají již existující (cached) instanci.
@@ -21,9 +22,12 @@ export function navigatingTo(args: EventData) {
     }
     page.bindingContext = viewModel;
 
-    // Aplikace motivu včetně vlastních barev (P3: custom téma)
+    // Aplikace motivu včetně vlastních barev (P3: custom téma).
+    // ThemeService pochází ze serviceLocatoru (singleton) – dříve zde
+    // vznikala nezávislá instance, takže motiv mohla aplikovat jiná
+    // instance, než kterou používala app.ts či settings-view-model.
     if (!themeService) {
-        themeService = new ThemeService();
+        themeService = serviceLocator.get<ThemeService>(ServiceTokens.ThemeService);
     }
     themeService.applyToPage(page);
 
@@ -37,3 +41,4 @@ export function navigatingTo(args: EventData) {
 export function resetViewModel(): void {
     viewModel = null;
 }
+

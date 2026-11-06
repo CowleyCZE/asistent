@@ -23,6 +23,14 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+      # NativeScript 8.3 vyžaduje JDK 17 – bez explicitní instalace
+      # může CI použít výchozí JDK (11/21) a build selže.
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install dependencies
         run: npm install
 
@@ -55,24 +63,25 @@ jobs:
           npm install -g nativescript@8.3.0
           ns --version
 
+      # POZOR: android-actions/setup-android@v3 nemá žádné versionované inputy
+      # (android-version, ndk-version, cmake-version, build-tools-version,
+      # accept-licenses se tiše ignorují). SDK komponenty se instalují
+      # explicitně přes sdkmanager v dalším kroku.
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          android-version: 33
-          ndk-version: 25.2.9519653
-          cmake-version: 3.22.1
-          build-tools-version: 33.0.2
-          accept-licenses: true
 
       - name: Install Android dependencies
         run: |
+          yes | sdkmanager --licenses > /dev/null || true
           sdkmanager "platforms;android-33"
           sdkmanager "build-tools;33.0.2"
           sdkmanager "extras;android;m2repository"
           sdkmanager "extras;google;m2repository"
 
+      # Debug build – bez --env.production (to patří až na release build;
+      # kombinace „Debug" + production env byla nekonzistentní).
       - name: Build Android APK (Debug)
-        run: ns build android --env.production
+        run: ns build android
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
 
@@ -88,3 +97,4 @@ jobs:
 
       - name: List built files
         run: find . -name "*.apk" -type f 2>/dev/null | head -20
+

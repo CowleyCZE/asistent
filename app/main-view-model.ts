@@ -7,7 +7,12 @@ import { FeedbackService } from './services/feedback.service';
 import { ConnectivityService } from './services/connectivity.service';
 import { serviceLocator, ServiceTokens } from './services/service-locator';
 import { IAssistantService, ISettingsService, INotificationService } from './services/service-interfaces';
-import { themeService } from './app';
+import { ThemeService } from './services/theme.service';
+
+// POZOR: dříve se zde importoval `themeService` z './app' (app.ts), což
+// vytvářelo cyklickou závislost app.ts → app-root → main-page →
+// main-view-model → app.ts. ThemeService se nyní řeší přes serviceLocator
+// (singleton), takže cyklus přebývá a motiv aplikuje jedna sdílená instance.
 
 /**
  * View-model hlavní stránky.
@@ -203,7 +208,7 @@ export class MainViewModel extends Observable {
     }
 
     get themeService() {
-        return themeService;
+        return serviceLocator.get<ThemeService>(ServiceTokens.ThemeService);
     }
 
     /** Přepne poslouchání řeči (start/stop) a přehraje zpětnou vazbu. */
@@ -261,3 +266,4 @@ export class MainViewModel extends Observable {
         }
     }
 }
+

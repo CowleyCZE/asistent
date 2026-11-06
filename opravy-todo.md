@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (12. běh – opraveny zbývající 2 P1 chyby: wake word smyčka s exponenciálním backoffem, limitem 5 chyb v řadě a stopem u fatálních chyb; TTS speak() nyní používá připojený UtteranceProgressListener, unikátní utteranceId a čeká na skutečné dokončení řeči. P1 je tím vyčerpáno.)
+**Poslední aktualizace:** 5. listopadu 2026 (13. běh – opraveny 3 P2 úkoly: odstraněn cyklický import main-view-model → app.ts (ThemeService nyní přes serviceLocator); odstraněno předčasné applyThemeToRootView() po Application.run() v app.ts; opraven build.yml – JDK 17, platné inputy setup-android, debug build bez --env.production. Částečně řeší konsolidaci služeb: ThemeService je nyní singleton přes serviceLocator ve všech stránkách.)
 **Dokument pročištěn:** dokončené úkoly odstraněny (archiv ve starších commitech), zůstávají pouze otevřené a nově nalezené chyby.
 
 ---
@@ -22,13 +22,8 @@
 ## P2 - STŘEDNÍ PRIORITA #nové-chyby
 
 ### Architektura
-- [ ] **Cyklický import: main-view-model.ts → ./app (themeService)** – main-view-model importuje `themeService` z `app.ts`, přičemž app.ts spouští aplikaci, která načítá main-page → main-view-model. Import se v kodu nepoužívá (mrtvý import) – odstranit, tím přejde i riziko cyklické závislosti. #nová-chyba
-- [ ] **Tři paralelní mechanismy správy služeb** – `serviceRegistry` (singleton cleanup), `serviceLocator`/`DIContainer` (DI) a přímé `new` v konstruktorech služeb. Navíc `ThemeService` se vytváří `new` nezávisle na 3+ místech (app.ts, main-page.ts, settings-view-model.ts), takže motiv aplikují různé instance. Konsolidovat: jeden mechanismus, ThemeService do serviceLocator. #nová-chyba
-- [ ] **app.ts volá `applyThemeToRootView()` bezprostředně po `Application.run()`** – kořenový view v tu chvíli ještě nemusí existovat (proto je tam i druhé volání na launchEvent). První volání je nespolehlivé/zbytečné – odstranit jej. #nová-chyba
-- [ ] **DI nekonzistence u služeb** – SpeechRecognitionService, TextToSpeechService, FeedbackService a CommandProcessor si vytvářejí vlastní `new SettingsService()` místo injekce přes serviceLocator; nastavení se pak čte z více instancí stejné služby. Dodělat konzistentní constructor injection. #nová-chyba
-
-### CI/CD
-- [ ] **build.yml nesrovnalosti** – krok „Build Android APK (Debug)" spouští `ns build android --env.production`; akce `android-actions/setup-android` nemá inputy `android-version`/`ndk-version`/`cmake-version`/`build-tools-version` (tichá se ignorují, verze tedy nejsou garantované); chybí explicitní instalace JDK 17, na které NativeScript 8.3 závisí. #nová-chyba
+- [ ] **Zbývající konsolidace mechanismů správy služeb** – *(částečně vyřešeno v 13. běhu: ThemeService je nyní registrován v serviceLocatoru jako singleton; app.ts, main-page.ts i settings-view-model.ts používají jednu sdílenou instanci)* – stále však paralelně existují `serviceRegistry` (cleanup při exitu) a `serviceLocator`/`DIContainer` (DI); konsolidovat na jeden mechanismus (např. dispose() registrace přes serviceLocator, serviceRegistry odebrat). #nová-chyba
+- [ ] **DI nekonzistence u služeb** – SpeechRecognitionService, TextToSpeechService, FeedbackService a CommandProcessor si vytvářejí vlastní `new SettingsService()` místo injekce přes serviceLocator; nastavení se pak čte z více instancí stejné služby. Dodělat konzistentní constructor injection (pozor na cyklický import služba → serviceLocator → služba). #nová-chyba
 
 ---
 
@@ -76,10 +71,10 @@
 
 - P0 (Kritické): 0 (2 opraveny v 10. běhu)
 - P1 (Důležité): 0 (poslední 2 opraveny v 12. běhu; 4 v 11. běhu; isOnline v 10. běhu)
-- P2 (Střední): 5 otevřených
+- P2 (Střední): 2 otevřené (3 opraveny v 13. běhu; konsolidace služeb částečně)
 - P3 (Nízké): 3 blokované
 - P4 (Dlouhodobé): 18 úkolů
-- **Celkem otevřeno: 26**
+- **Celkem otevřeno: 23**
 
 ---
 

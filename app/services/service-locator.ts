@@ -17,6 +17,7 @@ import { PermissionsService } from './permissions.service';
 import { FeedbackService } from './feedback.service';
 import { ConnectivityService } from './connectivity.service';
 import { ThemeService } from './theme.service';
+import { serviceRegistry } from './service-registry';
 
 /** Tokeny služeb (typově bezpečné klíče) */
 export const ServiceTokens = {
@@ -38,6 +39,8 @@ export const ServiceTokens = {
 
 export class ServiceLocator {
     private container: DIContainer;
+    /** Tokeny už zaregistrované pro cleanup (jednorázová registrace). */
+    private cleanupRegistered: Set<string> = new Set();
 
     constructor() {
         this.container = new DIContainer();
@@ -46,15 +49,24 @@ export class ServiceLocator {
 
     /** Zaregistruje výchozí implementace služeb */
     private registerDefaults(): void {
+        // Sdílená instance SettingsService – všechny služby, které ji
+        // vyžadují, ji dostanou injekcí (dříve si každá vytvářela
+        // vlastní `new SettingsService()`).
         this.container.register(ServiceTokens.SettingsService, () => new SettingsService());
         this.container.register(ServiceTokens.TaskerService, () => new TaskerService());
         this.container.register(ServiceTokens.HistoryService, () => new HistoryService());
-        this.container.register(ServiceTokens.TextToSpeechService, () => new TextToSpeechService());
+        this.container.register(ServiceTokens.TextToSpeechService, () =>
+            new TextToSpeechService({ settingsService: this.get(ServiceTokens.SettingsService) }));
         this.container.register(ServiceTokens.CacheService, () => new CacheService());
         this.container.register(ServiceTokens.OfflineService, () => new OfflineService());
         this.container.register(ServiceTokens.NotificationService, () => new NotificationService());
-        this.container.register(ServiceTokens.AssistantService, () => new AssistantService());
-        this.container.register(ServiceTokens.SpeechRecognitionService, () => new SpeechRecognitionService());
+        this.container.register(ServiceTokens.AssistantService, () =>
+            new AssistantService({
+                settingsService: this.get(ServiceTokens.SettingsService),
+                ttsService: this.get(ServiceTokens.TextToSpeechService)
+            }));
+        this.container.register(ServiceTokens.SpeechRecognitionService, () =>
+            new SpeechRecognitionService({ settingsService: this.get(ServiceTokens.SettingsService) }));
         this.container.register(ServiceTokens.TranslatorService, () => new TranslatorService());
         this.container.register(ServiceTokens.PermissionsService, () => new PermissionsService());
         this.container.register(ServiceTokens.FeedbackService, () => new FeedbackService());
@@ -62,9 +74,25 @@ export class ServiceLocator {
         this.container.register(ServiceTokens.ThemeService, () => new ThemeService());
     }
 
-    /** Získá službu podle tokenu (singleton) */
+    /**
+     * Získá službu podle tokenu (singleton).
+     *
+     * Služby implementující IDisposable (dispose()) se při prvním
+     * vytvoření automaticky registrují do serviceRegistry pro cleanup
+     * při ukončení aplikace – služby se tak nemusí samy registrovat
+     * ve svých konstruktorech a registrace je na jednom místě.
+     */
     public get<T>(token: string): T {
-        return this.container.resolve<T>(token);
+        const instance = this.container.resolve<T>(token);
+        if (
+            !this.cleanupRegistered.has(token) &&
+            instance &&
+            typeof (instance as any).dispose === 'function'
+        ) {
+            this.cleanupRegistered.add(token);
+            serviceRegistry.register(instance as any);
+        }
+        return instance;
     }
 
     /** Přepíše registraci (testy / alternativní implementace) */
@@ -75,4 +103,5 @@ export class ServiceLocator {
 
 // Globální singleton
 export const serviceLocator = new ServiceLocator();
+
 

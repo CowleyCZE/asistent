@@ -2,9 +2,14 @@ import { knownFolders, path, File } from '@nativescript/core';
 
 declare var android: any;
 declare var java: any;
-import { serviceRegistry } from './service-registry';
 
-/** Zvuková zpětná vazba (Android MediaPlayer) pro start/stop/error. */
+/**
+ * Zvuková zpětná vazba (Android MediaPlayer) pro start/stop/error.
+ *
+ * Registraci pro cleanup při ukončení aplikace provádí serviceLocator
+ * automaticky při vytvoření singletonu (viz ServiceLocator.get) –
+ * služba se už sama do serviceRegistry neregistruje.
+ */
 export class FeedbackService {
     private player: any;
     private readonly soundsPath: string;
@@ -21,9 +26,6 @@ export class FeedbackService {
             console.error('Chyba při vytváření MediaPlayer:', error);
         }
         this.soundsPath = path.join(knownFolders.currentApp().path, 'assets', 'sounds');
-
-        // Register for cleanup on app exit
-        serviceRegistry.register(this);
     }
 
     /** Přehraje zvuk začátku poslechu (start.wav). */

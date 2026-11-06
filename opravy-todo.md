@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (13. běh – opraveny 3 P2 úkoly: odstraněn cyklický import main-view-model → app.ts (ThemeService nyní přes serviceLocator); odstraněno předčasné applyThemeToRootView() po Application.run() v app.ts; opraven build.yml – JDK 17, platné inputy setup-android, debug build bez --env.production. Částečně řeší konsolidaci služeb: ThemeService je nyní singleton přes serviceLocator ve všech stránkách.)
+**Poslední aktualizace:** 5. listopadu 2026 (14. běh – dokončeny zbývající 2 P2 úkoly: 1) DI konzistence – SpeechRecognitionService, TextToSpeechService a AssistantService (→ CommandProcessor) dostávají sdílenou SettingsService injekcí přes serviceLocator; 2) konsolidace mechanismů správy služeb – služby se již samy neregistrují do serviceRegistry, registraci IDisposable singletonů provádí centrálně ServiceLocator.get(); settings-view-model používá služby výhradně přes serviceLocator. P2 je tím vyčerpáno.)
 **Dokument pročištěn:** dokončené úkoly odstraněny (archiv ve starších commitech), zůstávají pouze otevřené a nově nalezené chyby.
 
 ---
@@ -21,9 +21,7 @@
 
 ## P2 - STŘEDNÍ PRIORITA #nové-chyby
 
-### Architektura
-- [ ] **Zbývající konsolidace mechanismů správy služeb** – *(částečně vyřešeno v 13. běhu: ThemeService je nyní registrován v serviceLocatoru jako singleton; app.ts, main-page.ts i settings-view-model.ts používají jednu sdílenou instanci)* – stále však paralelně existují `serviceRegistry` (cleanup při exitu) a `serviceLocator`/`DIContainer` (DI); konsolidovat na jeden mechanismus (např. dispose() registrace přes serviceLocator, serviceRegistry odebrat). #nová-chyba
-- [ ] **DI nekonzistence u služeb** – SpeechRecognitionService, TextToSpeechService, FeedbackService a CommandProcessor si vytvářejí vlastní `new SettingsService()` místo injekce přes serviceLocator; nastavení se pak čte z více instancí stejné služby. Dodělat konzistentní constructor injection (pozor na cyklický import služba → serviceLocator → služba). #nová-chyba
+*(žádné otevřené – poslední 2 opraveny v 14. běhu: DI konzistence (constructor injection + sdílená SettingsService přes serviceLocator) a konsolidace cleanup registrace do ServiceLocator.get(). Dříve: 3 opraveny v 13. běhu: cyklický import main-view-model → app.ts; předčasné applyThemeToRootView() v app.ts; build.yml (JDK 17, platné inputy, debug build bez --env.production).)*
 
 ---
 
@@ -71,10 +69,10 @@
 
 - P0 (Kritické): 0 (2 opraveny v 10. běhu)
 - P1 (Důležité): 0 (poslední 2 opraveny v 12. běhu; 4 v 11. běhu; isOnline v 10. běhu)
-- P2 (Střední): 2 otevřené (3 opraveny v 13. běhu; konsolidace služeb částečně)
+- P2 (Střední): 0 (poslední 2 opraveny v 14. běhu; 3 v 13. běhu; konsolidace částečně i v 13. běhu)
 - P3 (Nízké): 3 blokované
 - P4 (Dlouhodobé): 18 úkolů
-- **Celkem otevřeno: 23**
+- **Celkem otevřeno: 21** (z toho 3 blokované externími závislostmi)
 
 ---
 

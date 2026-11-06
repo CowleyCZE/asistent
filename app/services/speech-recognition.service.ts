@@ -3,8 +3,12 @@ import { Observable } from '@nativescript/core';
 declare var android: any;
 declare var java: any;
 import { SettingsService } from './settings.service';
-import { serviceRegistry } from './service-registry';
 import { WakeWordMatcher } from '../utils/wake-word.utils';
+
+/** Závislosti pro constructor injection (testy / serviceLocator). */
+export interface SpeechRecognitionServiceDeps {
+    settingsService?: SettingsService;
+}
 
 /** Rozpoznávání řeči (Android SpeechRecognizer) včetně wake word detekce. */
 export class SpeechRecognitionService extends Observable {
@@ -32,16 +36,19 @@ export class SpeechRecognitionService extends Observable {
      */
     private static readonly FATAL_ERRORS: number[] = [5, 8, 9];
 
-    constructor() {
+    constructor(deps: SpeechRecognitionServiceDeps = {}) {
         super();
-        this.settingsService = new SettingsService();
+        // Constructor injection – služba dostává sdílenou instanci
+        // SettingsService (dříve vždy vlastní `new`, takže nastavení
+        // četlo více instancí téže služby současně).
+        this.settingsService = deps.settingsService ?? new SettingsService();
         this.initializeSpeechRecognizer();
         // POZOR: wake word detekci nespouštíme v konstruktoru – SpeechRecognizer
         // bez uděleného oprávnění k mikrofonu by jen vykával chybovou smyčku.
         // Start zajišťuje MainViewModel po udělení oprávnění.
-        
-        // Register for cleanup on app exit
-        serviceRegistry.register(this);
+        //
+        // Registraci pro cleanup při exitu provádí serviceLocator
+        // automaticky při vytvoření singletonu (viz ServiceLocator.get).
     }
 
     private initializeSpeechRecognizer() {
@@ -314,3 +321,4 @@ export class SpeechRecognitionService extends Observable {
         this.destroy();
     }
 }
+

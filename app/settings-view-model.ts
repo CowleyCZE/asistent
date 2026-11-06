@@ -59,10 +59,11 @@ export class SettingsViewModel extends Observable {
 
     constructor() {
         super();
-        this.settingsService = new SettingsService();
-        this.ttsService = new TextToSpeechService();
-        // ThemeService ze serviceLocatoru (singleton) – sdílená instance
-        // s app.ts a main-page, dříve nezávislá `new ThemeService()`.
+        // Služby se získávají ze serviceLocatoru (singletony, sdílené
+        // instance s ostatními stránkami; cleanup při exitu řeší
+        // serviceLocator). Dříve se zde vytvářely přímé `new` instance.
+        this.settingsService = serviceLocator.get<SettingsService>(ServiceTokens.SettingsService);
+        this.ttsService = serviceLocator.get<TextToSpeechService>(ServiceTokens.TextToSpeechService);
         this.themeService = serviceLocator.get<ThemeService>(ServiceTokens.ThemeService);
         this.loadSettings();
         this.loadAvailableLanguages();
@@ -436,5 +437,6 @@ export class SettingsViewModel extends Observable {
         this.currentThemeMode = mode;
     }
 }
+
 
 

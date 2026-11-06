@@ -2,7 +2,11 @@ import { Application, ApplicationSettings } from '@nativescript/core';
 import { SettingsService } from './settings.service';
 declare var android: any;
 declare var java: any;
-import { serviceRegistry } from './service-registry';
+
+/** Závislosti pro constructor injection (testy / serviceLocator). */
+export interface TextToSpeechServiceDeps {
+    settingsService?: SettingsService;
+}
 
 export interface TTSConfig {
     enabled: boolean;
@@ -27,12 +31,13 @@ export class TextToSpeechService {
     /** Odhad čtení na znak textu (ms). */
     private static readonly SPEAK_TIMEOUT_PER_CHAR_MS = 120;
 
-    constructor() {
-        this.settingsService = new SettingsService();
+    constructor(deps: TextToSpeechServiceDeps = {}) {
+        // Constructor injection – sdílená instance SettingsService
+        // (dříve vždy vlastní `new SettingsService()`).
+        this.settingsService = deps.settingsService ?? new SettingsService();
         this.initialize();
-        
-        // Register for cleanup on app exit
-        serviceRegistry.register(this);
+        // Registraci pro cleanup při exitu provádí serviceLocator
+        // automaticky při vytvoření singletonu (viz ServiceLocator.get).
     }
 
     private initialize() {
@@ -337,3 +342,4 @@ export class TextToSpeechService {
         return available.includes(language) || available.includes(language.split('-')[0]);
     }
 }
+

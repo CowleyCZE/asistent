@@ -18,6 +18,7 @@ import { FeedbackService } from './feedback.service';
 import { ConnectivityService } from './connectivity.service';
 import { ThemeService } from './theme.service';
 import { serviceRegistry } from './service-registry';
+import { BackupService } from './backup.service';
 
 /** Tokeny služeb (typově bezpečné klíče) */
 export const ServiceTokens = {
@@ -34,7 +35,8 @@ export const ServiceTokens = {
     PermissionsService: 'PermissionsService',
     FeedbackService: 'FeedbackService',
     ConnectivityService: 'ConnectivityService',
-    ThemeService: 'ThemeService'
+    ThemeService: 'ThemeService',
+    BackupService: 'BackupService'
 } as const;
 
 export class ServiceLocator {
@@ -72,6 +74,11 @@ export class ServiceLocator {
         this.container.register(ServiceTokens.FeedbackService, () => new FeedbackService());
         this.container.register(ServiceTokens.ConnectivityService, () => new ConnectivityService());
         this.container.register(ServiceTokens.ThemeService, () => new ThemeService());
+        this.container.register(ServiceTokens.BackupService, () =>
+            new BackupService({
+                settingsService: this.get(ServiceTokens.SettingsService),
+                historyService: this.get(ServiceTokens.HistoryService)
+            }));
     }
 
     /**

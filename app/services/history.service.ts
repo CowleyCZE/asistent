@@ -146,6 +146,36 @@ export class HistoryService {
         return JSON.stringify(history, null, 2);
     }
 
+    /**
+     * Importuje (nahradí) celou historii ze zálohy (backup/restore).
+     * Záznamy se validují a normalizují; maximálně MAX_HISTORY_ITEMS.
+     * @returns true, pokud byla historie uložena.
+     */
+    public importHistory(entries: any[]): boolean {
+        if (!Array.isArray(entries)) {
+            return false;
+        }
+        const validTypes = ['webhook', 'tasker', 'unknown'];
+        const validStatuses = ['success', 'error', 'network_error'];
+        const history: CommandHistory[] = entries
+            .filter((e: any) => e && typeof e.command === 'string')
+            .map((e: any) => {
+                const ts = new Date(e.timestamp);
+                return {
+                    id: typeof e.id === 'string' && e.id.length > 0 ? e.id : IdGenerator.generate(),
+                    command: e.command,
+                    actionName: typeof e.actionName === 'string' ? e.actionName : 'neznámá akce',
+                    actionType: validTypes.includes(e.actionType) ? e.actionType : 'unknown',
+                    status: validStatuses.includes(e.status) ? e.status : 'error',
+                    timestamp: isNaN(ts.getTime()) ? new Date() : ts,
+                    errorMessage: typeof e.errorMessage === 'string' ? e.errorMessage : undefined
+                };
+            })
+            .slice(0, this.MAX_HISTORY_ITEMS);
+        this.saveHistory(history);
+        return true;
+    }
+
     private saveHistory(history: CommandHistory[]): void {
         const historyToSave = history.map(entry => ({
             ...entry,

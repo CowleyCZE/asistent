@@ -1,6 +1,6 @@
 # CZE-asistent - TODO List
 
-**Poslední aktualizace:** 5. listopadu 2026 (14. běh – dokončeny zbývající 2 P2 úkoly: 1) DI konzistence – SpeechRecognitionService, TextToSpeechService a AssistantService (→ CommandProcessor) dostávají sdílenou SettingsService injekcí přes serviceLocator; 2) konsolidace mechanismů správy služeb – služby se již samy neregistrují do serviceRegistry, registraci IDisposable singletonů provádí centrálně ServiceLocator.get(); settings-view-model používá služby výhradně přes serviceLocator. P2 je tím vyčerpáno.)
+**Poslední aktualizace:** 7. listopadu 2026 (15. běh – P0–P2 zůstávají vyčerpané; dokončeny 3 P4 úkoly: 1) Implementovat NLP – IntentRecognitionService rozšířen o normalizaci textu (malá písmena, bez diakritiky) a fuzzy matching (Levenshteinova vzdálenost, práh 0.72) proti klíčovým slovům pravidel, takže chybně rozpoznaná řeč ('cas', 'kolik je hodin' apod.) se stále rozpozná; 2) Přidat context understanding – konverzační kontext (poslední záměr a odpověď, TTL 5 minut), follow-up příkazy ('znovu', 'zopakuj to', 'ještě jednou', 'repeat') vrátí poslední odpověď, nové metody resetContext()/getContext(); 3) Umožnit backup/restore – nová BackupService (export/import nastavení a historie do JSON nebo souboru ve složce Dokumenty, verzování formátu BACKUP_VERSION=1, validace a limit 1 MB), SettingsService.importSettings(), HistoryService.importHistory(), IBackupService a registrace v ServiceLocator. P3 úkoly zůstávají blokované externími závislostmi – zařízení/emulátor, Firebase projekt vlastníka, build pro screenshots.)
 **Dokument pročištěn:** dokončené úkoly odstraněny (archiv ve starších commitech), zůstávají pouze otevřené a nově nalezené chyby.
 
 ---
@@ -41,13 +41,10 @@
 - [ ] IoT platform integrace
 
 ### AI/ML
-- [ ] Implementovat NLP
-- [ ] Přidat context understanding
 
 ### Cloud a synchronizace
 - [ ] Synchronizovat nastavení přes cloud
 - [ ] Synchronizovat historii přes cloud
-- [ ] Umožnit backup/restore
 - [ ] Synchronizace mezi zařízeními
 - [ ] Shared commands
 - [ ] Cross-device communication
@@ -71,8 +68,8 @@
 - P1 (Důležité): 0 (poslední 2 opraveny v 12. běhu; 4 v 11. běhu; isOnline v 10. běhu)
 - P2 (Střední): 0 (poslední 2 opraveny v 14. běhu; 3 v 13. běhu; konsolidace částečně i v 13. běhu)
 - P3 (Nízké): 3 blokované
-- P4 (Dlouhodobé): 18 úkolů
-- **Celkem otevřeno: 21** (z toho 3 blokované externími závislostmi)
+- P4 (Dlouhodobé): 15 úkolů (poslední 3 dokončeny v 15. běhu: NLP, context understanding, backup/restore)
+- **Celkem otevřeno: 18** (z toho 3 blokované externími závislostmi)
 
 ---
 
@@ -86,4 +83,4 @@
 
 ---
 
-**Soubor vytvořen:** 2. listopadu 2024 · **Poslední revize:** 5. listopadu 2026
+**Soubor vytvořen:** 2. listopadu 2024 · **Poslední revize:** 7. listopadu 2026

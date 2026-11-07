@@ -54,7 +54,7 @@ describe('TextToSpeechService', () => {
         // Simulace Android TTS API (jen části používané v speak())
         const seenIds: string[] = [];
         (global as any).android = {
-            os: { Bundle: function () { this.putInt = () => {}; } },
+            os: { Bundle: function (this: any) { this.putInt = () => {}; } }, // this: any – jinak TS odvodí typ bez putInt
             media: { AudioManager: { STREAM_MUSIC: 3 } },
             speech: { tts: { TextToSpeech: {
                 QUEUE_FLUSH: 0,
@@ -87,7 +87,7 @@ describe('TextToSpeechService', () => {
 
     it('speak se vyřeší false při chybě enginu (onError)', async () => {
         (global as any).android = {
-            os: { Bundle: function () { this.putInt = () => {}; } },
+            os: { Bundle: function (this: any) { this.putInt = () => {}; } }, // this: any – jinak TS odvodí typ bez putInt
             media: { AudioManager: { STREAM_MUSIC: 3 } },
             speech: { tts: { TextToSpeech: {
                 QUEUE_FLUSH: 0,
@@ -110,7 +110,7 @@ describe('TextToSpeechService', () => {
 
     it('speak se vyřeší false, když engine odmítne zařadit do fronty', async () => {
         (global as any).android = {
-            os: { Bundle: function () { this.putInt = () => {}; } },
+            os: { Bundle: function (this: any) { this.putInt = () => {}; } }, // this: any – jinak TS odvodí typ bez putInt
             media: { AudioManager: { STREAM_MUSIC: 3 } },
             speech: { tts: { TextToSpeech: {
                 QUEUE_FLUSH: 0,
@@ -130,7 +130,7 @@ describe('TextToSpeechService', () => {
 
     it('stop vyřeší čekající čtení jako přerušené', async () => {
         (global as any).android = {
-            os: { Bundle: function () { this.putInt = () => {}; } },
+            os: { Bundle: function (this: any) { this.putInt = () => {}; } }, // this: any – jinak TS odvodí typ bez putInt
             media: { AudioManager: { STREAM_MUSIC: 3 } },
             speech: { tts: { TextToSpeech: {
                 QUEUE_FLUSH: 0,

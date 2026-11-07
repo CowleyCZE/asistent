@@ -290,4 +290,24 @@ export class SettingsService {
         auth.useHmac = useHmac;
         this.updateWebhookAuth(auth);
     }
+
+    /**
+     * Importuje celé nastavení ze zálohy (backup/restore).
+     * Neplatná/chybějící pole se doplní výchozími hodnotami.
+     * @returns true, pokud bylo nastavení uloženo.
+     */
+    public importSettings(settings: any): boolean {
+        if (!settings || typeof settings !== 'object') {
+            return false;
+        }
+        const merged: AppSettings = {
+            ...this.DEFAULT_SETTINGS,
+            ...settings,
+            actions: Array.isArray(settings.actions) ? settings.actions : this.DEFAULT_SETTINGS.actions,
+            wakePhrases: Array.isArray(settings.wakePhrases) ? settings.wakePhrases : this.DEFAULT_SETTINGS.wakePhrases
+        };
+        this.saveSettings(merged);
+        return true;
+    }
 }
+

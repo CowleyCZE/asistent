@@ -1,4 +1,5 @@
 import { AssistantService } from '../../app/services/assistant.service';
+import { Application } from '@nativescript/core';
 import { Action } from '../../app/services/settings.service';
 import { mockReset } from '../mocks/application-settings.mock';
 
@@ -208,14 +209,17 @@ describe('AssistantService', () => {
     describe('processCommand - offline fronta', () => {
         afterEach(() => {
             (global as any).android = undefined;
+            (Application as any).android = undefined; // reset mocku Application
         });
 
         it('zařadí příkaz do fronty při nedostupné síti', async () => {
-            // Simulace Android kontextu: getActiveNetworkInfo vrací null -> offline
-            (global as any).android = {
+            // isOnline() čte Application.android.context (viz 10. běh) a používá
+            // moderní API getActiveNetwork()/getNetworkCapabilities();
+            // getActiveNetwork() -> null znamená žádnou síť, tedy offline.
+            (Application as any).android = {
                 context: {
                     CONNECTIVITY_SERVICE: 'connectivity',
-                    getSystemService: () => ({ getActiveNetworkInfo: () => null })
+                    getSystemService: () => ({ getActiveNetwork: () => null })
                 }
             };
 
@@ -232,11 +236,13 @@ describe('AssistantService', () => {
         });
 
         it('IFTTT akci offline do fronty nezařadí (fronta umí jen webhook/tasker)', async () => {
-            // Simulace Android kontextu: getActiveNetworkInfo vrací null -> offline
-            (global as any).android = {
+            // isOnline() čte Application.android.context (viz 10. běh) a používá
+            // moderní API getActiveNetwork()/getNetworkCapabilities();
+            // getActiveNetwork() -> null znamená žádnou síť, tedy offline.
+            (Application as any).android = {
                 context: {
                     CONNECTIVITY_SERVICE: 'connectivity',
-                    getSystemService: () => ({ getActiveNetworkInfo: () => null })
+                    getSystemService: () => ({ getActiveNetwork: () => null })
                 }
             };
 

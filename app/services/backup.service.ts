@@ -168,7 +168,7 @@ export class BackupService {
                 return empty;
             }
             const file = File.fromPath(filePath);
-            const json = file.readText();
+            const json = file.readTextSync(); // readText() vrací Promise<string>, zde potřebujeme synchronní čtení
             return this.restoreFromJson(json);
         } catch (error) {
             ErrorHandler.handle('BackupService.restoreFromFile', error);

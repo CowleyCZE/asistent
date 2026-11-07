@@ -242,7 +242,10 @@ export class TextToSpeechService {
 
             try {
                 const queueMode = android.speech.tts.TextToSpeech.QUEUE_FLUSH;
-                const params = new android.os.Bundle();
+                // any: na Androidu reálný android.os.Bundle; v testech/JSDOM může být
+                // globální `android` typován odlišně (types-minimal), což způsobovalo
+                // TS2339 na params.putInt – typ zde schválně tolerujeme.
+                const params: any = new android.os.Bundle();
 
                 // Set stream type for volume control
                 params.putInt(android.speech.tts.TextToSpeech.Engine.KEY_PARAM_STREAM,

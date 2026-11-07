@@ -3,7 +3,7 @@ import { StorageKeys } from '../utils/constants';
 import { IdGenerator } from '../utils/id-generator';
 
 export type CommandStatus = 'success' | 'error' | 'network_error';
-export type ActionType = 'webhook' | 'tasker' | 'unknown';
+export type ActionType = 'webhook' | 'tasker' | 'ifttt' | 'homeassistant' | 'custom' | 'unknown';
 
 export interface CommandHistory {
     id: string;
@@ -155,7 +155,7 @@ export class HistoryService {
         if (!Array.isArray(entries)) {
             return false;
         }
-        const validTypes = ['webhook', 'tasker', 'unknown'];
+        const validTypes = ['webhook', 'tasker', 'ifttt', 'homeassistant', 'custom', 'unknown'];
         const validStatuses = ['success', 'error', 'network_error'];
         const history: CommandHistory[] = entries
             .filter((e: any) => e && typeof e.command === 'string')

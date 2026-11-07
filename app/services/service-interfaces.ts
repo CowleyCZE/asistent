@@ -5,6 +5,7 @@
 import { Action, WebhookAuth } from './settings.service';
 import { CommandStatus } from './history.service';
 import { RecognizedIntent } from './intent-recognition.service';
+import { RestoreResult } from './backup.service';
 
 export interface ISettingsService {
     getActions(): Action[];
@@ -81,4 +82,15 @@ export interface ICommandProcessor {
     executeWebhookUrl(url: string): Promise<boolean>;
     /** Spustí Tasker úlohu podle názvu (offline fronta). */
     executeTaskerTaskName(taskName: string): boolean;
+}
+
+export interface IBackupService {
+    /** Vytvoří JSON zálohu (nastavení + historie) jako řetězec. */
+    exportBackup(): string;
+    /** Zapíše zálohu do souboru ve složce Dokumenty; vrací cestu nebo null. */
+    exportBackupToFile(): string | null;
+    /** Obnoví data z JSON zálohy s validací. */
+    restoreFromJson(json: string): RestoreResult;
+    /** Obnoví data ze souboru se zálohou. */
+    restoreFromFile(filePath: string): RestoreResult;
 }
